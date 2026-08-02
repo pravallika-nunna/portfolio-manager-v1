@@ -1,0 +1,33 @@
+package com.example.hsbcproject.dto;
+
+import com.example.hsbcproject.domain.AssetType;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+public record UpdatePortfolioItemRequest(
+        @NotBlank(message = "ticker is required")
+        @Pattern(regexp = "^[A-Za-z.]{1,10}$", message = "ticker must be letters/dot up to 10 chars")
+        String ticker,
+
+        @NotNull(message = "quantity is required")
+        @Min(value = 1, message = "quantity must be at least 1")
+        Integer quantity,
+
+        @NotNull(message = "assetType is required")
+        AssetType assetType,
+
+        @NotNull(message = "purchasePrice is required")
+        @DecimalMin(value = "0.01", message = "purchasePrice must be greater than 0")
+        BigDecimal purchasePrice,
+
+        @NotNull(message = "purchaseDate is required")
+        @PastOrPresent(message = "purchaseDate cannot be in the future")
+        LocalDate purchaseDate) {
+}
+

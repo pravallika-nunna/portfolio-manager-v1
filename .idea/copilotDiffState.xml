@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/hsbcproject/src/main/java/com/example/hsbcproject/controller/PriceController.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/hsbcproject/src/main/java/com/example/hsbcproject/controller/PriceController.java" />
+              <option name="updatedContent" value="package com.example.hsbcproject.controller;&#10;&#10;import com.example.hsbcproject.dto.LivePriceResponse;&#10;import com.example.hsbcproject.service.PriceService;&#10;import io.swagger.v3.oas.annotations.Operation;&#10;import io.swagger.v3.oas.annotations.tags.Tag;&#10;import org.springframework.web.bind.annotation.GetMapping;&#10;import org.springframework.web.bind.annotation.PathVariable;&#10;import org.springframework.web.bind.annotation.RequestMapping;&#10;import org.springframework.web.bind.annotation.RestController;&#10;&#10;@RestController&#10;@RequestMapping(&quot;/api/prices&quot;)&#10;@Tag(name = &quot;Prices&quot;, description = &quot;Fetch live daily price data from Yahoo Finance&quot;)&#10;public class PriceController {&#10;&#10;    private final PriceService priceService;&#10;&#10;    public PriceController(PriceService priceService) {&#10;        this.priceService = priceService;&#10;    }&#10;&#10;    @GetMapping(&quot;/{ticker}&quot;)&#10;    @Operation(summary = &quot;Get current price for a ticker (e.g. AAPL, TSLA, AMZN, C, FB)&quot;)&#10;    public LivePriceResponse getPrice(@PathVariable String ticker) {&#10;        return priceService.getPrice(ticker);&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
