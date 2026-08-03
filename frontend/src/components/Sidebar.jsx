@@ -1,11 +1,14 @@
-import { LayoutDashboard, Landmark, ArrowLeftRight, Eye, UserCircle } from 'lucide-react'
+import { LayoutDashboard, Landmark, ArrowLeftRight, Eye, UserCircle, Calculator, BarChart3, Coins } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const navigationItems = [
   { name: 'Overview', path: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', path: '/dashboard', icon: BarChart3 },
   { name: 'Holdings', path: '/holdings', icon: Landmark },
   { name: 'Transactions', path: '/transactions', icon: ArrowLeftRight },
   { name: 'Watchlist', path: '/watchlist', icon: Eye },
+  { name: 'Dividends', path: '/dividends', icon: Coins },
+  { name: 'Tax', path: '/tax', icon: Calculator },
   { name: 'Profile', path: '/profile', icon: UserCircle },
 ]
 

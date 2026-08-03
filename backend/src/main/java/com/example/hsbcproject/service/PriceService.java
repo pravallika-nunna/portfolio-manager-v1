@@ -30,32 +30,42 @@ public class PriceService {
                     .body(new ParameterizedTypeReference<>() {});
 
             if (response == null) {
-                return new LivePriceResponse(ticker, null, null, null, "No data returned");
+                return new LivePriceResponse(ticker.toUpperCase(), null, null, null, "No data returned");
             }
 
-            BigDecimal price = extractBigDecimal(response, "price");
-            BigDecimal change = extractBigDecimal(response, "change");
-            BigDecimal changePercent = extractBigDecimal(response, "changePercent");
+            // API returns { ticker, price_data: { close: [...], open: [...], high: [...], low: [...], volume: [...] } }
+            // Latest price = last element of close array
+            @SuppressWarnings("unchecked")
+            Map<String, Object> priceData = (Map<String, Object>) response.get("price_data");
+            if (priceData == null) {
+                return new LivePriceResponse(ticker.toUpperCase(), null, null, null, "price_data missing in response");
+            }
 
-            return new LivePriceResponse(ticker.toUpperCase(), price, change, changePercent, null);
+            @SuppressWarnings("unchecked")
+            java.util.List<Number> closeList = (java.util.List<Number>) priceData.get("close");
+            if (closeList == null || closeList.isEmpty()) {
+                return new LivePriceResponse(ticker.toUpperCase(), null, null, null, "No close data in response");
+            }
+
+            BigDecimal currentPrice = BigDecimal.valueOf(closeList.get(closeList.size() - 1).doubleValue());
+            BigDecimal change = null;
+            BigDecimal changePercent = null;
+
+            if (closeList.size() >= 2) {
+                BigDecimal previousPrice = BigDecimal.valueOf(closeList.get(closeList.size() - 2).doubleValue());
+                change = currentPrice.subtract(previousPrice).setScale(4, java.math.RoundingMode.HALF_UP);
+                changePercent = previousPrice.compareTo(BigDecimal.ZERO) != 0
+                        ? change.divide(previousPrice, 4, java.math.RoundingMode.HALF_UP)
+                                .multiply(BigDecimal.valueOf(100)).setScale(2, java.math.RoundingMode.HALF_UP)
+                        : BigDecimal.ZERO;
+            }
+
+            return new LivePriceResponse(ticker.toUpperCase(), currentPrice, change, changePercent, null);
         } catch (Exception e) {
             log.warn("Could not fetch live price for {}: {}", ticker, e.getMessage());
             return new LivePriceResponse(ticker.toUpperCase(), null, null, null,
                     "Price unavailable: " + e.getMessage());
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private BigDecimal extractBigDecimal(Map<String, Object> data, String key) {
-        Object value = data.get(key);
-        if (value instanceof Number n) {
-            return BigDecimal.valueOf(n.doubleValue());
-        }
-        if (value instanceof Map<?, ?> nested) {
-            Object raw = ((Map<String, Object>) nested).get("raw");
-            if (raw instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
-        }
-        return null;
     }
 }
 
