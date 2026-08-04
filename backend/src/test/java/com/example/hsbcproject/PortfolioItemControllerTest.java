@@ -35,14 +35,16 @@ class PortfolioItemControllerTest {
     @Test
     void createUpdateDeleteFlowWorks() {
         PortfolioItemResponse created = service.create(new CreatePortfolioItemRequest(
-                "AAPL", 12, AssetType.STOCK, BigDecimal.valueOf(150.00), LocalDate.of(2024, 1, 15)));
+                "AAPL", 12, AssetType.STOCK, BigDecimal.valueOf(150.00), LocalDate.of(2024, 1, 15),
+                "Apple Inc.", "Technology", null, null, null));
         assertEquals("AAPL", created.ticker());
         assertEquals(1, service.findAll().size());
 
         PortfolioItemResponse updated = service.update(
                 created.id(),
                 new UpdatePortfolioItemRequest("AAPL", 20, AssetType.STOCK,
-                        BigDecimal.valueOf(155.00), LocalDate.of(2024, 1, 15)));
+                        BigDecimal.valueOf(155.00), LocalDate.of(2024, 1, 15),
+                        "Apple Inc.", "Technology", null, null, null));
         assertEquals(20, updated.quantity());
 
         service.delete(created.id());
@@ -52,9 +54,11 @@ class PortfolioItemControllerTest {
     @Test
     void summaryAggregatesQuantitiesByType() {
         service.create(new CreatePortfolioItemRequest(
-                "AAPL", 10, AssetType.STOCK, BigDecimal.valueOf(160.00), LocalDate.of(2024, 3, 20)));
+                "AAPL", 10, AssetType.STOCK, BigDecimal.valueOf(160.00), LocalDate.of(2024, 3, 20),
+                "Apple Inc.", "Technology", null, null, null));
         service.create(new CreatePortfolioItemRequest(
-                "BND", 7, AssetType.BOND, BigDecimal.valueOf(50.00), LocalDate.of(2024, 6, 1)));
+                "BND", 7, AssetType.BOND, BigDecimal.valueOf(50.00), LocalDate.of(2024, 6, 1),
+                "Vanguard Total Bond Market ETF", null, "Vanguard", BigDecimal.valueOf(3.5), LocalDate.of(2030, 6, 1)));
 
         PortfolioSummaryResponse summary = service.getSummary();
         assertEquals(2, summary.totalPositions());

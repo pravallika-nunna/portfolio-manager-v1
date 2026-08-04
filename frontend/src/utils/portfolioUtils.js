@@ -1,17 +1,20 @@
+// Holdings here are real backend PortfolioItemResponse objects, optionally enriched
+// with a `currentPrice` looked up from the live price service.
 export function getHoldingsMetrics(holdings) {
-  const totalInvested = holdings.reduce((sum, item) => sum + item.avgBuyPrice * item.quantity, 0)
-  const totalValue = holdings.reduce((sum, item) => sum + item.currentPrice * item.quantity, 0)
+  const totalInvested = holdings.reduce((sum, item) => sum + item.purchasePrice * item.quantity, 0)
+  const totalValue = holdings.reduce((sum, item) => sum + (item.currentPrice ?? item.purchasePrice) * item.quantity, 0)
   const totalGain = totalValue - totalInvested
   const gainPct = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0
 
   const byAssetType = holdings.reduce((acc, item) => {
     const key = item.assetType.toLowerCase()
-    acc[key] = (acc[key] || 0) + item.currentPrice * item.quantity
+    acc[key] = (acc[key] || 0) + (item.currentPrice ?? item.purchasePrice) * item.quantity
     return acc
   }, {})
 
   const bySector = holdings.reduce((acc, item) => {
-    acc[item.sector] = (acc[item.sector] || 0) + item.currentPrice * item.quantity
+    const key = item.sector || 'Uncategorized'
+    acc[key] = (acc[key] || 0) + (item.currentPrice ?? item.purchasePrice) * item.quantity
     return acc
   }, {})
 
@@ -25,25 +28,17 @@ export function getHoldingsMetrics(holdings) {
   }
 }
 
-export function formatCurrency(value) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(value)
+// Real cumulative invested-capital trend derived from each holding's purchase date/price,
+// optionally filtered to a single asset type. No synthetic data points are generated.
+export function buildCumulativeInvestmentSeries(holdings, assetType = 'ALL') {
+  const filtered = assetType === 'ALL' ? holdings : holdings.filter((item) => item.assetType === assetType)
+  if (!filtered.length) return []
+
+  const sorted = [...filtered].sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate))
+  let running = 0
+  return sorted.map((item) => {
+    running += Number(item.purchasePrice) * Number(item.quantity)
+    return { name: item.purchaseDate, value: Math.round(running * 100) / 100 }
+  })
 }
 
-export function formatPercent(value) {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
-}
-
-export function buildPerformanceSeries(holdings) {
-  const base = 180000 + holdings.length * 12000
-  return [
-    { name: 'Mon', value: base + 4200 },
-    { name: 'Tue', value: base + 6800 },
-    { name: 'Wed', value: base + 5100 },
-    { name: 'Thu', value: base + 9500 },
-    { name: 'Fri', value: base + 12800 },
-  ]
-}

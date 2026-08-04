@@ -35,6 +35,21 @@ public class PortfolioItem {
     @Column(name = "purchase_date", nullable = false)
     private LocalDate purchaseDate;
 
+    @Column(name = "name", length = 200)
+    private String name;
+
+    @Column(name = "sector", length = 100)
+    private String sector;
+
+    @Column(name = "issuer", length = 200)
+    private String issuer;
+
+    @Column(name = "interest_rate", precision = 6, scale = 3)
+    private BigDecimal interestRate;
+
+    @Column(name = "maturity_date")
+    private LocalDate maturityDate;
+
     public Long getId() {
         return id;
     }
@@ -81,6 +96,46 @@ public class PortfolioItem {
 
     public void setPurchaseDate(LocalDate purchaseDate) {
         this.purchaseDate = purchaseDate;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSector() {
+        return sector;
+    }
+
+    public void setSector(String sector) {
+        this.sector = sector;
+    }
+
+    public String getIssuer() {
+        return issuer;
+    }
+
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+
+    public BigDecimal getInterestRate() {
+        return interestRate;
+    }
+
+    public void setInterestRate(BigDecimal interestRate) {
+        this.interestRate = interestRate;
+    }
+
+    public LocalDate getMaturityDate() {
+        return maturityDate;
+    }
+
+    public void setMaturityDate(LocalDate maturityDate) {
+        this.maturityDate = maturityDate;
     }
 }
 

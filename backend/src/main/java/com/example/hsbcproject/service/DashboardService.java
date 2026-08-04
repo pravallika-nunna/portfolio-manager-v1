@@ -65,7 +65,8 @@ public class DashboardService {
 
         List<PortfolioItemResponse> responses = items.stream()
                 .map(i -> new PortfolioItemResponse(i.getId(), i.getTicker(), i.getQuantity(),
-                        i.getAssetType(), i.getPurchasePrice(), i.getPurchaseDate()))
+                        i.getAssetType(), i.getPurchasePrice(), i.getPurchaseDate(),
+                        i.getName(), i.getSector(), i.getIssuer(), i.getInterestRate(), i.getMaturityDate()))
                 .toList();
 
         return new DashboardResponse(items.size(), totalQuantity,

@@ -1,5 +1,6 @@
 package com.example.hsbcproject.service;
 
+import com.example.hsbcproject.domain.AssetType;
 import com.example.hsbcproject.domain.PortfolioItem;
 import com.example.hsbcproject.dto.CreatePortfolioItemRequest;
 import com.example.hsbcproject.dto.PortfolioItemResponse;
@@ -8,6 +9,7 @@ import com.example.hsbcproject.dto.UpdatePortfolioItemRequest;
 import com.example.hsbcproject.exception.ResourceNotFoundException;
 import com.example.hsbcproject.repository.PortfolioItemRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,23 +39,43 @@ public class PortfolioItemService {
     }
 
     public PortfolioItemResponse create(CreatePortfolioItemRequest request) {
+        validateAssetSpecificFields(request.assetType(), request.maturityDate(), request.purchaseDate());
+
         PortfolioItem item = new PortfolioItem();
         item.setTicker(request.ticker().toUpperCase());
         item.setQuantity(request.quantity());
         item.setAssetType(request.assetType());
         item.setPurchasePrice(request.purchasePrice());
         item.setPurchaseDate(request.purchaseDate());
+        item.setName(request.name());
+        item.setSector(request.sector());
+        item.setIssuer(request.issuer());
+        item.setInterestRate(request.interestRate());
+        item.setMaturityDate(request.maturityDate());
         return toResponse(portfolioItemRepository.save(item));
     }
 
     public PortfolioItemResponse update(Long id, UpdatePortfolioItemRequest request) {
+        validateAssetSpecificFields(request.assetType(), request.maturityDate(), request.purchaseDate());
+
         PortfolioItem item = getEntity(id);
         item.setTicker(request.ticker().toUpperCase());
         item.setQuantity(request.quantity());
         item.setAssetType(request.assetType());
         item.setPurchasePrice(request.purchasePrice());
         item.setPurchaseDate(request.purchaseDate());
+        item.setName(request.name());
+        item.setSector(request.sector());
+        item.setIssuer(request.issuer());
+        item.setInterestRate(request.interestRate());
+        item.setMaturityDate(request.maturityDate());
         return toResponse(portfolioItemRepository.save(item));
+    }
+
+    private void validateAssetSpecificFields(AssetType assetType, LocalDate maturityDate, LocalDate purchaseDate) {
+        if (maturityDate != null && !maturityDate.isAfter(purchaseDate)) {
+            throw new IllegalArgumentException("maturityDate must be after purchaseDate");
+        }
     }
 
     public void delete(Long id) {
@@ -88,6 +110,7 @@ public class PortfolioItemService {
 
     private PortfolioItemResponse toResponse(PortfolioItem item) {
         return new PortfolioItemResponse(item.getId(), item.getTicker(), item.getQuantity(),
-                item.getAssetType(), item.getPurchasePrice(), item.getPurchaseDate());
+                item.getAssetType(), item.getPurchasePrice(), item.getPurchaseDate(),
+                item.getName(), item.getSector(), item.getIssuer(), item.getInterestRate(), item.getMaturityDate());
     }
 }
