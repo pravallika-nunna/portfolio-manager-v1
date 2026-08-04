@@ -42,7 +42,7 @@ function BreakdownCard({ title, data, valueFormatter }) {
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard({ refreshToken }) {
   const navigate = useNavigate()
   const { assetType } = useParams()
   const activeAsset = (assetType || 'ALL').toUpperCase()
@@ -68,7 +68,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     load()
-  }, [activeAsset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAsset, refreshToken])
 
   const gainLossTone = useMemo(() => {
     const value = Number(data?.unrealizedGainLoss || 0)

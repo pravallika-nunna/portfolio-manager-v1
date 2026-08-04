@@ -1,14 +1,14 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-const rangeOptions = ['Daily', 'Weekly', 'Monthly', 'Yearly', 'All Time']
+const defaultRangeOptions = ['ALL', 'STOCK', 'BOND', 'CRYPTO']
 
-export default function PortfolioChart({ data, activeRange, onRangeChange }) {
+export default function PortfolioChart({ data, activeRange, onRangeChange, rangeOptions = defaultRangeOptions, title = 'Portfolio Performance', subtitle = 'Cumulative invested capital by purchase date' }) {
   return (
     <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">Portfolio Performance</h3>
-          <p className="text-sm text-slate-500">Trend view for your current holdings</p>
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+          <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {rangeOptions.map((option) => (
@@ -38,3 +38,4 @@ export default function PortfolioChart({ data, activeRange, onRangeChange }) {
     </div>
   )
 }
+

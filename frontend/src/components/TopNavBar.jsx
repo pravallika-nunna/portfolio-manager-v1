@@ -12,14 +12,14 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
     const value = query.trim().toLowerCase()
     if (!value) return []
     return holdings.filter((item) => {
-      const searchText = `${item.symbol} ${item.companyName} ${item.assetType}`.toLowerCase()
+      const searchText = `${item.ticker} ${item.name || ''} ${item.assetType}`.toLowerCase()
       return searchText.includes(value)
     }).slice(0, 5)
   }, [holdings, query])
 
   const handleSelectSuggestion = (item) => {
-    setQuery(item.symbol)
-    onSearch?.(item.symbol)
+    setQuery(item.ticker)
+    onSearch?.(item.ticker)
   }
 
   return (
@@ -58,7 +58,7 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
                     className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50"
                   >
                     <span>
-                      <span className="font-medium text-slate-900">{item.symbol}</span> · {item.companyName}
+                      <span className="font-medium text-slate-900">{item.ticker}</span> · {item.name || 'Unnamed holding'}
                     </span>
                     <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.assetType}</span>
                   </button>

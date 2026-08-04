@@ -85,7 +85,7 @@ function HoldingModal({ isOpen, onClose, onSubmit, initialData, mode }) {
   )
 }
 
-export default function Holdings() {
+export default function Holdings({ refreshToken }) {
   const [items, setItems] = useState([])
   const [pricesByTicker, setPricesByTicker] = useState({})
   const [loading, setLoading] = useState(true)
@@ -133,7 +133,8 @@ export default function Holdings() {
 
   useEffect(() => {
     load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshToken])
 
   const tableRows = useMemo(() => {
     return items.map((item) => {

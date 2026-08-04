@@ -2,7 +2,7 @@ import { Menu, X } from 'lucide-react'
 import Sidebar from './Sidebar'
 import TopNavBar from './TopNavBar'
 
-function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsSidebarOpen, children }) {
+function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsSidebarOpen, onAddInvestment, children }) {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.08),_transparent_34%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_100%)] text-slate-800">
       <div className="mx-auto flex min-h-screen w-full max-w-[1800px] flex-col overflow-hidden">
@@ -16,7 +16,7 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
               <Menu size={18} />
             </button>
             <div className="flex-1">
-              <TopNavBar holdings={holdings} onSearch={setSearchQuery} />
+              <TopNavBar holdings={holdings} onSearch={setSearchQuery} onAddInvestment={onAddInvestment} />
             </div>
           </div>
         </header>
@@ -50,7 +50,7 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
                 <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Modern dashboard for your investments</h1>
               </div>
               <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
-                Frontend-only mock experience
+                Live backend-connected portfolio
               </div>
             </div>
 

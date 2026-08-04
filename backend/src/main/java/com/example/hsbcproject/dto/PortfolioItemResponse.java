@@ -10,6 +10,11 @@ public record PortfolioItemResponse(
         Integer quantity,
         AssetType assetType,
         BigDecimal purchasePrice,
-        LocalDate purchaseDate) {
+        LocalDate purchaseDate,
+        String name,
+        String sector,
+        String issuer,
+        BigDecimal interestRate,
+        LocalDate maturityDate) {
 }
 

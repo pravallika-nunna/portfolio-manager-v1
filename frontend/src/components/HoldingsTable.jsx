@@ -3,12 +3,12 @@ import { ArrowUpDown } from 'lucide-react'
 import { currency, formatPercent } from '../utils/formatters'
 
 const columns = [
-  { key: 'symbol', label: 'Symbol' },
-  { key: 'companyName', label: 'Company Name' },
+  { key: 'ticker', label: 'Symbol' },
+  { key: 'name', label: 'Name' },
   { key: 'sector', label: 'Sector' },
   { key: 'assetType', label: 'Asset Type' },
   { key: 'quantity', label: 'Quantity' },
-  { key: 'avgBuyPrice', label: 'Avg Buy Price' },
+  { key: 'purchasePrice', label: 'Avg Buy Price' },
   { key: 'currentPrice', label: 'Current Price' },
   { key: 'totalValue', label: 'Total Value' },
   { key: 'profitLoss', label: 'Profit/Loss' },
@@ -70,12 +70,12 @@ export default function HoldingsTable({ holdings }) {
             ) : (
               sortedHoldings.map((holding) => (
                 <tr key={holding.id} className="transition hover:bg-slate-50">
-                  <td className="px-4 py-3 font-semibold text-slate-900">{holding.symbol}</td>
-                  <td className="px-4 py-3 text-slate-600">{holding.companyName}</td>
-                  <td className="px-4 py-3 text-slate-600">{holding.sector}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-900">{holding.ticker}</td>
+                  <td className="px-4 py-3 text-slate-600">{holding.name || '—'}</td>
+                  <td className="px-4 py-3 text-slate-600">{holding.sector || '—'}</td>
                   <td className="px-4 py-3 text-slate-600">{holding.assetType}</td>
                   <td className="px-4 py-3 text-slate-600">{holding.quantity}</td>
-                  <td className="px-4 py-3 text-slate-600">{currency.format(holding.avgBuyPrice)}</td>
+                  <td className="px-4 py-3 text-slate-600">{currency.format(holding.purchasePrice)}</td>
                   <td className="px-4 py-3 text-slate-600">{currency.format(holding.currentPrice)}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{currency.format(holding.totalValue)}</td>
                   <td className={`px-4 py-3 font-medium ${holding.profitLoss >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
