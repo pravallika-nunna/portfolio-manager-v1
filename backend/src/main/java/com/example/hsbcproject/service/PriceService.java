@@ -1,6 +1,7 @@
 package com.example.hsbcproject.service;
 
 import com.example.hsbcproject.dto.LivePriceResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -8,40 +9,75 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import yahoofinance.Stock;
+import yahoofinance.YahooFinance;
 
 @Service
 public class PriceService {
 
     private static final Logger log = LoggerFactory.getLogger(PriceService.class);
-    private static final String BASE_URL =
+    private static final String FALLBACK_BASE_URL =
             "https://c4rm9elh30.execute-api.us-east-1.amazonaws.com/default/cachedPriceData";
 
-    private final RestClient restClient;
+    private final RestClient fallbackClient;
 
     public PriceService() {
-        this.restClient = RestClient.builder().baseUrl(BASE_URL).build();
+        this.fallbackClient = RestClient.builder().baseUrl(FALLBACK_BASE_URL).build();
     }
 
     public LivePriceResponse getPrice(String ticker) {
+        String normalizedTicker = ticker == null ? "" : ticker.trim().toUpperCase();
+
         try {
-            Map<String, Object> response = restClient.get()
-                    .uri("?ticker={ticker}", ticker.toUpperCase())
+            Stock stock = YahooFinance.get(normalizedTicker);
+            if (stock != null && stock.getQuote() != null && stock.getQuote().getPrice() != null) {
+                BigDecimal price = stock.getQuote().getPrice();
+                BigDecimal change = stock.getQuote().getChange();
+                BigDecimal changePercent = stock.getQuote().getChangeInPercent();
+                return new LivePriceResponse(normalizedTicker, price, change, changePercent, null);
+            }
+
+            return tryFallback(normalizedTicker, "Live quote not returned by Yahoo");
+        } catch (IOException e) {
+            log.warn("Yahoo price fetch failed for {}: {}", normalizedTicker, e.getMessage());
+            return tryFallback(normalizedTicker, "Yahoo unavailable (possibly rate-limited)");
+        } catch (RuntimeException e) {
+            log.warn("Unexpected Yahoo error for {}: {}", normalizedTicker, e.getMessage());
+            return tryFallback(normalizedTicker, "Yahoo unavailable");
+        }
+    }
+
+    private LivePriceResponse tryFallback(String ticker, String fallbackReason) {
+        try {
+            Map<String, Object> response = fallbackClient.get()
+                    .uri("?ticker={ticker}", ticker)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {});
 
             if (response == null) {
-                return new LivePriceResponse(ticker, null, null, null, "No data returned");
+                return new LivePriceResponse(ticker, null, null, null,
+                        fallbackReason + ". Fallback returned no data.");
             }
 
             BigDecimal price = extractBigDecimal(response, "price");
             BigDecimal change = extractBigDecimal(response, "change");
             BigDecimal changePercent = extractBigDecimal(response, "changePercent");
 
-            return new LivePriceResponse(ticker.toUpperCase(), price, change, changePercent, null);
+            if (price != null) {
+                return new LivePriceResponse(
+                        ticker,
+                        price,
+                        change,
+                        changePercent,
+                        fallbackReason + ". Showing cached fallback price.");
+            }
+
+            return new LivePriceResponse(ticker, null, null, null,
+                    fallbackReason + ". Ticker not available in fallback cache.");
         } catch (Exception e) {
-            log.warn("Could not fetch live price for {}: {}", ticker, e.getMessage());
-            return new LivePriceResponse(ticker.toUpperCase(), null, null, null,
-                    "Price unavailable: " + e.getMessage());
+            log.warn("Fallback price fetch failed for {}: {}", ticker, e.getMessage());
+            return new LivePriceResponse(ticker, null, null, null,
+                    fallbackReason + ". Fallback also unavailable: " + e.getMessage());
         }
     }
 
@@ -53,9 +89,10 @@ public class PriceService {
         }
         if (value instanceof Map<?, ?> nested) {
             Object raw = ((Map<String, Object>) nested).get("raw");
-            if (raw instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+            if (raw instanceof Number n) {
+                return BigDecimal.valueOf(n.doubleValue());
+            }
         }
         return null;
     }
 }
-
