@@ -3,6 +3,8 @@ package com.example.hsbcproject.controller;
 import com.example.hsbcproject.dto.CreatePortfolioItemRequest;
 import com.example.hsbcproject.dto.PortfolioItemResponse;
 import com.example.hsbcproject.dto.PortfolioSummaryResponse;
+import com.example.hsbcproject.dto.SellHoldingRequest;
+import com.example.hsbcproject.dto.TransactionResponse;
 import com.example.hsbcproject.dto.UpdatePortfolioItemRequest;
 import com.example.hsbcproject.service.PortfolioItemService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,6 +68,12 @@ public class PortfolioItemController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         portfolioItemService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/sell")
+    @Operation(summary = "Sell all units of a holding and log a SELL transaction")
+    public TransactionResponse sell(@PathVariable Long id, @Valid @RequestBody SellHoldingRequest request) {
+        return portfolioItemService.sell(id, request.pricePerUnit());
     }
 
     @GetMapping("/summary")

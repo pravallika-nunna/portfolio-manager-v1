@@ -2,12 +2,16 @@ package com.example.hsbcproject.service;
 
 import com.example.hsbcproject.domain.AssetType;
 import com.example.hsbcproject.domain.PortfolioItem;
+import com.example.hsbcproject.domain.Transaction;
+import com.example.hsbcproject.domain.TransactionType;
 import com.example.hsbcproject.dto.CreatePortfolioItemRequest;
 import com.example.hsbcproject.dto.PortfolioItemResponse;
 import com.example.hsbcproject.dto.PortfolioSummaryResponse;
+import com.example.hsbcproject.dto.TransactionResponse;
 import com.example.hsbcproject.dto.UpdatePortfolioItemRequest;
 import com.example.hsbcproject.exception.ResourceNotFoundException;
 import com.example.hsbcproject.repository.PortfolioItemRepository;
+import com.example.hsbcproject.repository.TransactionRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -21,9 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class PortfolioItemService {
 
     private final PortfolioItemRepository portfolioItemRepository;
+    private final TransactionRepository transactionRepository;
 
-    public PortfolioItemService(PortfolioItemRepository portfolioItemRepository) {
+    public PortfolioItemService(PortfolioItemRepository portfolioItemRepository,
+                                TransactionRepository transactionRepository) {
         this.portfolioItemRepository = portfolioItemRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +59,10 @@ public class PortfolioItemService {
         item.setIssuer(request.issuer());
         item.setInterestRate(request.interestRate());
         item.setMaturityDate(request.maturityDate());
-        return toResponse(portfolioItemRepository.save(item));
+        PortfolioItemResponse saved = toResponse(portfolioItemRepository.save(item));
+        logTransaction(item.getTicker(), item.getAssetType(), TransactionType.BUY,
+                item.getQuantity(), item.getPurchasePrice(), item.getPurchaseDate());
+        return saved;
     }
 
     public PortfolioItemResponse update(Long id, UpdatePortfolioItemRequest request) {
@@ -81,6 +91,30 @@ public class PortfolioItemService {
     public void delete(Long id) {
         PortfolioItem item = getEntity(id);
         portfolioItemRepository.delete(item);
+    }
+
+    public TransactionResponse sell(Long id, BigDecimal pricePerUnit) {
+        PortfolioItem item = getEntity(id);
+        Transaction tx = logTransaction(item.getTicker(), item.getAssetType(), TransactionType.SELL,
+                item.getQuantity(), pricePerUnit, LocalDate.now());
+        portfolioItemRepository.delete(item);
+        BigDecimal total = tx.getPricePerUnit().multiply(BigDecimal.valueOf(tx.getQuantity()));
+        return new TransactionResponse(tx.getId(), tx.getTicker(), tx.getAssetType(),
+                tx.getTransactionType(), tx.getQuantity(), tx.getPricePerUnit(),
+                total, tx.getTransactionDate(), tx.getNotes());
+    }
+
+    private Transaction logTransaction(String ticker, AssetType assetType,
+                                       TransactionType type, Integer quantity,
+                                       BigDecimal pricePerUnit, LocalDate date) {
+        Transaction tx = new Transaction();
+        tx.setTicker(ticker);
+        tx.setAssetType(assetType);
+        tx.setTransactionType(type);
+        tx.setQuantity(quantity);
+        tx.setPricePerUnit(pricePerUnit);
+        tx.setTransactionDate(date);
+        return transactionRepository.save(tx);
     }
 
     @Transactional(readOnly = true)

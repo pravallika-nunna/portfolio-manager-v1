@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, RefreshCw, Trash2, X } from 'lucide-react'
+import { Plus, Pencil, RefreshCw, Trash2, X, TrendingDown } from 'lucide-react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import {
   createPortfolioItem,
@@ -7,6 +7,7 @@ import {
   getApiErrorMessage,
   getPortfolioItems,
   getPrice,
+  sellHolding,
   updatePortfolioItem,
 } from '../services/portfolioService'
 import { currency, formatPercent } from '../utils/formatters'
@@ -94,6 +95,7 @@ export default function Holdings({ refreshToken }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [confirmSellItem, setConfirmSellItem] = useState(null)
 
   const loadPrices = async (holdings) => {
     if (!holdings.length) {
@@ -189,6 +191,17 @@ export default function Holdings({ refreshToken }) {
     }
   }
 
+  const handleConfirmSell = async () => {
+    try {
+      const price = confirmSellItem.livePrice ?? confirmSellItem.purchasePrice
+      await sellHolding(confirmSellItem.id, price)
+      setConfirmSellItem(null)
+      await load()
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Could not sell holding.'))
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
@@ -239,6 +252,7 @@ export default function Holdings({ refreshToken }) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button onClick={() => handleEdit(item)} className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100"><Pencil size={14} /></button>
+                        <button onClick={() => setConfirmSellItem(item)} title="Sell all" className="rounded-xl border border-amber-200 p-2 text-amber-600 hover:bg-amber-50"><TrendingDown size={14} /></button>
                         <button onClick={() => setConfirmDeleteId(item.id)} className="rounded-xl border border-rose-100 p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={14} /></button>
                       </div>
                     </td>
@@ -252,6 +266,13 @@ export default function Holdings({ refreshToken }) {
 
       <HoldingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSave} initialData={editingItem} mode={editingItem ? 'edit' : 'add'} />
       <ConfirmDialog isOpen={Boolean(confirmDeleteId)} title="Delete holding" message="This will permanently remove the holding from the portfolio." onCancel={() => setConfirmDeleteId(null)} onConfirm={handleConfirmDelete} />
+      <ConfirmDialog
+        isOpen={Boolean(confirmSellItem)}
+        title="Sell holding"
+        message={confirmSellItem ? `Sell all ${confirmSellItem.quantity} unit(s) of ${confirmSellItem.ticker} at ${confirmSellItem.livePrice != null ? `live price $${Number(confirmSellItem.livePrice).toFixed(2)}` : `purchase price $${Number(confirmSellItem.purchasePrice).toFixed(2)}`}? This will remove the position and log a SELL transaction.` : ''}
+        onCancel={() => setConfirmSellItem(null)}
+        onConfirm={handleConfirmSell}
+      />
     </div>
   )
 }
