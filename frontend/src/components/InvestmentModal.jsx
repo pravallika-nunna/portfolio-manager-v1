@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Coins, Landmark, Loader2, Search, TrendingUp, X, XCircle } from 'lucide-react'
-import { createInvestment, getApiErrorMessage, searchInstruments } from '../services/investmentService'
+import { AlertTriangle, CheckCircle2, Coins, Landmark, Loader2, Search, TrendingUp, X, XCircle } from 'lucide-react'
+import { createInvestment, getApiErrorMessage, getStockQuote, searchInstruments } from '../services/investmentService'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -97,6 +97,7 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false)
   const [status, setStatus] = useState('idle') // idle | submitting | success | error
   const [statusMessage, setStatusMessage] = useState('')
+  const [quote, setQuote] = useState({ status: 'idle', data: null, error: '' }) // idle | loading | success | error
 
   useEffect(() => {
     if (isOpen) {
@@ -105,8 +106,33 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
       setStatus('idle')
       setStatusMessage('')
       setIsSuggestionsOpen(false)
+      setQuote({ status: 'idle', data: null, error: '' })
     }
   }, [isOpen])
+
+  const fetchStockQuote = async (rawTicker) => {
+    const ticker = (rawTicker || '').trim().toUpperCase()
+    if (!TICKER_PATTERN.test(ticker)) return
+
+    setQuote({ status: 'loading', data: null, error: '' })
+    try {
+      const data = await getStockQuote(ticker)
+      if (data.currentPrice == null) {
+        setQuote({ status: 'error', data, error: data.errorMessage || 'Price unavailable for this ticker.' })
+        return
+      }
+      setQuote({ status: 'success', data, error: '' })
+      setForm((current) => ({
+        ...current,
+        purchasePrice: String(data.currentPrice),
+        name: current.name || data.companyName || current.name,
+        sector: current.sector || data.sector || current.sector,
+      }))
+      setErrors((current) => ({ ...current, purchasePrice: undefined }))
+    } catch (err) {
+      setQuote({ status: 'error', data: null, error: getApiErrorMessage(err, 'Could not fetch stock price.') })
+    }
+  }
 
   const suggestions = useMemo(
     () => searchInstruments(form.assetType, form.name),
@@ -129,12 +155,22 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
     setForm({ ...emptyForm, assetType, purchaseDate: form.purchaseDate || today() })
     setErrors({})
     setIsSuggestionsOpen(false)
+    setQuote({ status: 'idle', data: null, error: '' })
   }
 
   const handleSelectSuggestion = (item) => {
     setForm((current) => ({ ...current, name: item.name, ticker: item.ticker }))
     setErrors((current) => ({ ...current, name: undefined, ticker: undefined }))
     setIsSuggestionsOpen(false)
+    if (form.assetType === 'STOCK') {
+      fetchStockQuote(item.ticker)
+    }
+  }
+
+  const handleTickerBlur = () => {
+    if (form.assetType === 'STOCK') {
+      fetchStockQuote(form.ticker)
+    }
   }
 
   const handleSubmit = async (event) => {
@@ -234,6 +270,7 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
               name="ticker"
               value={form.ticker}
               onChange={handleChange}
+              onBlur={handleTickerBlur}
               placeholder={form.assetType === 'CRYPTO' ? 'e.g. BTC' : 'e.g. AAPL'}
               className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`}
             />
@@ -256,6 +293,30 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
               </datalist>
               {errors.sector ? <p className="mt-1 text-xs text-rose-500">{errors.sector}</p> : null}
             </label>
+          ) : null}
+
+          {form.assetType === 'STOCK' && quote.status === 'loading' ? (
+            <div className="sm:col-span-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              <Loader2 size={14} className="animate-spin" />
+              Fetching latest market price...
+            </div>
+          ) : null}
+
+          {form.assetType === 'STOCK' && quote.status === 'success' && quote.data ? (
+            <div className="sm:col-span-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              <p className="font-semibold">{quote.data.companyName || quote.data.symbol}</p>
+              <p>
+                {quote.data.symbol} · ${Number(quote.data.currentPrice).toFixed(2)}
+                {quote.data.sector ? ` · ${quote.data.sector}` : ''}
+              </p>
+            </div>
+          ) : null}
+
+          {form.assetType === 'STOCK' && quote.status === 'error' ? (
+            <div className="sm:col-span-2 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+              <span>{quote.error} You can enter the purchase price manually.</span>
+            </div>
           ) : null}
 
           {form.assetType === 'BOND' ? (
@@ -287,16 +348,22 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           </label>
 
           <label className="text-sm font-medium text-slate-700">
-            Purchase Price ($)
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              name="purchasePrice"
-              value={form.purchasePrice}
-              onChange={handleChange}
-              className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.purchasePrice ? 'border-rose-300' : 'border-slate-200'}`}
-            />
+            Purchase Price ($){form.assetType === 'STOCK' && quote.status === 'success' ? ' · auto-filled' : ''}
+            <div className="relative mt-1">
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                name="purchasePrice"
+                value={form.purchasePrice}
+                onChange={handleChange}
+                readOnly={form.assetType === 'STOCK' && quote.status === 'success'}
+                className={`w-full rounded-2xl border px-3 py-2 text-sm ${errors.purchasePrice ? 'border-rose-300' : 'border-slate-200'} ${form.assetType === 'STOCK' && quote.status === 'success' ? 'bg-slate-50 text-slate-500' : ''}`}
+              />
+              {form.assetType === 'STOCK' && quote.status === 'loading' ? (
+                <Loader2 size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" />
+              ) : null}
+            </div>
             {errors.purchasePrice ? <p className="mt-1 text-xs text-rose-500">{errors.purchasePrice}</p> : null}
           </label>
 

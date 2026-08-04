@@ -44,6 +44,14 @@ export async function createInvestment(form) {
   return (await api.post('/portfolio-items', payload)).data
 }
 
+/**
+ * Fetches company name, sector and live price for a stock ticker from the backend
+ * (which in turn talks to the market data provider - never called directly from the UI).
+ */
+export async function getStockQuote(ticker) {
+  return (await api.get(`/stocks/${encodeURIComponent(ticker.trim().toUpperCase())}/price`)).data
+}
+
 export async function getInvestments() {
   return (await api.get('/portfolio-items')).data
 }
