@@ -3,6 +3,8 @@ package com.example.hsbcproject.service;
 import com.example.hsbcproject.dto.LivePriceResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,23 +57,15 @@ public class PriceService {
                     .body(new ParameterizedTypeReference<>() {});
 
             if (response == null) {
-<<<<<<< HEAD
                 return new LivePriceResponse(ticker, null, null, null,
                         fallbackReason + ". Fallback returned no data.");
-=======
-                return new LivePriceResponse(ticker.toUpperCase(), null, null, null, "No data returned");
->>>>>>> f5b6b6859b2642cfe0b4b144e35c389411c3f488
             }
 
-            // API returns { ticker, price_data: { close: [...], open: [...], high: [...], low: [...], volume: [...] } }
-            // Latest price = last element of close array
-            @SuppressWarnings("unchecked")
-            Map<String, Object> priceData = (Map<String, Object>) response.get("price_data");
-            if (priceData == null) {
-                return new LivePriceResponse(ticker.toUpperCase(), null, null, null, "price_data missing in response");
-            }
+            BigDecimal price = extractBigDecimal(response, "price");
+            BigDecimal change = extractBigDecimal(response, "change");
+            BigDecimal changePercent = extractBigDecimal(response, "changePercent");
 
-<<<<<<< HEAD
+            // Alternate fallback shape: { price_data: { close: [...] } }
             if (price != null) {
                 return new LivePriceResponse(
                         ticker,
@@ -81,37 +75,46 @@ public class PriceService {
                         fallbackReason + ". Showing cached fallback price.");
             }
 
+            @SuppressWarnings("unchecked")
+            Map<String, Object> priceData = (Map<String, Object>) response.get("price_data");
+            if (priceData != null) {
+                @SuppressWarnings("unchecked")
+                List<Number> closeList = (List<Number>) priceData.get("close");
+                if (closeList != null && !closeList.isEmpty()) {
+                    BigDecimal currentPrice = BigDecimal.valueOf(closeList.get(closeList.size() - 1).doubleValue());
+                    BigDecimal computedChange = null;
+                    BigDecimal computedChangePercent = null;
+
+                    if (closeList.size() >= 2) {
+                        BigDecimal previousPrice = BigDecimal.valueOf(closeList.get(closeList.size() - 2).doubleValue());
+                        computedChange = currentPrice.subtract(previousPrice).setScale(4, RoundingMode.HALF_UP);
+                        if (previousPrice.compareTo(BigDecimal.ZERO) != 0) {
+                            computedChangePercent = computedChange
+                                    .divide(previousPrice, 6, RoundingMode.HALF_UP)
+                                    .multiply(BigDecimal.valueOf(100))
+                                    .setScale(2, RoundingMode.HALF_UP);
+                        } else {
+                            computedChangePercent = BigDecimal.ZERO;
+                        }
+                    }
+
+                    return new LivePriceResponse(
+                            ticker,
+                            currentPrice,
+                            computedChange,
+                            computedChangePercent,
+                            fallbackReason + ". Showing cached fallback price.");
+                }
+            }
+
             return new LivePriceResponse(ticker, null, null, null,
                     fallbackReason + ". Ticker not available in fallback cache.");
-=======
-            @SuppressWarnings("unchecked")
-            java.util.List<Number> closeList = (java.util.List<Number>) priceData.get("close");
-            if (closeList == null || closeList.isEmpty()) {
-                return new LivePriceResponse(ticker.toUpperCase(), null, null, null, "No close data in response");
-            }
-
-            BigDecimal currentPrice = BigDecimal.valueOf(closeList.get(closeList.size() - 1).doubleValue());
-            BigDecimal change = null;
-            BigDecimal changePercent = null;
-
-            if (closeList.size() >= 2) {
-                BigDecimal previousPrice = BigDecimal.valueOf(closeList.get(closeList.size() - 2).doubleValue());
-                change = currentPrice.subtract(previousPrice).setScale(4, java.math.RoundingMode.HALF_UP);
-                changePercent = previousPrice.compareTo(BigDecimal.ZERO) != 0
-                        ? change.divide(previousPrice, 4, java.math.RoundingMode.HALF_UP)
-                                .multiply(BigDecimal.valueOf(100)).setScale(2, java.math.RoundingMode.HALF_UP)
-                        : BigDecimal.ZERO;
-            }
-
-            return new LivePriceResponse(ticker.toUpperCase(), currentPrice, change, changePercent, null);
->>>>>>> f5b6b6859b2642cfe0b4b144e35c389411c3f488
         } catch (Exception e) {
             log.warn("Fallback price fetch failed for {}: {}", ticker, e.getMessage());
             return new LivePriceResponse(ticker, null, null, null,
                     fallbackReason + ". Fallback also unavailable: " + e.getMessage());
         }
     }
-<<<<<<< HEAD
 
     @SuppressWarnings("unchecked")
     private BigDecimal extractBigDecimal(Map<String, Object> data, String key) {
@@ -127,6 +130,4 @@ public class PriceService {
         }
         return null;
     }
-=======
->>>>>>> f5b6b6859b2642cfe0b4b144e35c389411c3f488
 }
