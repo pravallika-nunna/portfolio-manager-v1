@@ -130,7 +130,7 @@ public class PortfolioItemService {
             BigDecimal itemCost = item.getPurchasePrice().multiply(BigDecimal.valueOf(item.getQuantity()));
             totalCostBasis = totalCostBasis.add(itemCost);
             String key = item.getAssetType().name();
-            quantityByType.put(key, quantityByType.getOrDefault(key, 0L) + item.getQuantity());
+            quantityByType.merge(key, (long) item.getQuantity(), Long::sum);
             costByType.merge(key, itemCost, BigDecimal::add);
         }
 

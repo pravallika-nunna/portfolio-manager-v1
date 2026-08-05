@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { BriefcaseBusiness, Coins, Landmark, Sparkles } from 'lucide-react'
 import SummaryCard from '../components/SummaryCard'
 import AllocationPieChart from '../components/AllocationPieChart'
-import PortfolioChart from '../components/PortfolioChart'
+import PerformanceChart from '../components/PerformanceChart'
 import HoldingsTable from '../components/HoldingsTable'
 import { getApiErrorMessage, getInvestments } from '../services/investmentService'
 import { getPrice } from '../services/portfolioService'
-import { buildCumulativeInvestmentSeries, getHoldingsMetrics } from '../utils/portfolioUtils'
+import { getHoldingsMetrics } from '../utils/portfolioUtils'
 
 function createSummaryCards(metrics) {
   return [
@@ -74,7 +74,6 @@ export default function Overview({ searchQuery: searchQueryProp, onSearch, refre
   const [holdings, setHoldings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [assetFilter, setAssetFilter] = useState('ALL')
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
 
   const searchQuery = searchQueryProp !== undefined ? searchQueryProp : internalSearchQuery
@@ -112,7 +111,6 @@ export default function Overview({ searchQuery: searchQueryProp, onSearch, refre
   const summaryCards = useMemo(() => createSummaryCards(metrics), [metrics])
   const allocations = useMemo(() => createAllocationData(holdings), [holdings])
   const holdingsTableData = useMemo(() => createHoldingsTableData(holdings), [holdings])
-  const investmentTrend = useMemo(() => buildCumulativeInvestmentSeries(holdings, assetFilter), [holdings, assetFilter])
 
   const filteredHoldings = useMemo(() => {
     if (!searchQuery.trim()) return holdingsTableData
@@ -144,7 +142,7 @@ export default function Overview({ searchQuery: searchQueryProp, onSearch, refre
         <AllocationPieChart title="Portfolio Allocation by Asset Type" data={allocations.assetTypes} />
       </div>
 
-      <PortfolioChart data={investmentTrend} activeRange={assetFilter} onRangeChange={setAssetFilter} />
+      <PerformanceChart />
 
       <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
         <div className="mb-4 flex items-center justify-between">

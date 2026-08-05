@@ -3,7 +3,6 @@ package com.example.hsbcproject.service;
 import com.example.hsbcproject.domain.AssetType;
 import com.example.hsbcproject.domain.PortfolioItem;
 import com.example.hsbcproject.dto.DashboardResponse;
-import com.example.hsbcproject.dto.LivePriceResponse;
 import com.example.hsbcproject.dto.PortfolioItemResponse;
 import com.example.hsbcproject.repository.PortfolioItemRepository;
 import java.math.BigDecimal;
@@ -11,11 +10,10 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class DashboardService {
 
     private final PortfolioItemRepository portfolioItemRepository;
@@ -38,6 +36,18 @@ public class DashboardService {
     }
 
     private DashboardResponse buildDashboard(List<PortfolioItem> items) {
+        // Fetch live prices once per unique ticker to avoid N redundant HTTP calls
+        Map<String, BigDecimal> livePriceByTicker = items.stream()
+                .map(PortfolioItem::getTicker)
+                .distinct()
+                .collect(Collectors.toMap(
+                        ticker -> ticker,
+                        ticker -> {
+                            var r = priceService.getPrice(ticker);
+                            return r.currentPrice();
+                        }
+                ));
+
         BigDecimal totalCostBasis = BigDecimal.ZERO;
         BigDecimal totalCurrentValue = BigDecimal.ZERO;
         Map<String, Long> quantityByType = new HashMap<>();
@@ -53,8 +63,8 @@ public class DashboardService {
             quantityByType.merge(type, (long) item.getQuantity(), Long::sum);
             costByType.merge(type, cost, BigDecimal::add);
 
-            LivePriceResponse price = priceService.getPrice(item.getTicker());
-            BigDecimal currentPrice = price.currentPrice() != null ? price.currentPrice() : item.getPurchasePrice();
+            BigDecimal livePrice = livePriceByTicker.get(item.getTicker());
+            BigDecimal currentPrice = livePrice != null ? livePrice : item.getPurchasePrice();
             totalCurrentValue = totalCurrentValue.add(currentPrice.multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 

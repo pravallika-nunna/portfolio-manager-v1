@@ -81,3 +81,14 @@ export async function getTaxEstimate() {
 export async function getPrice(ticker) {
   return (await api.get(`/prices/${ticker}`)).data
 }
+
+// Portfolio Tracking
+export async function getPortfolioTracking(period) {
+  return (await api.get(`/portfolio-tracking/${period.toLowerCase()}`)).data
+}
+export async function getAllPortfolioSnapshots() {
+  return (await api.get('/portfolio-tracking/snapshots')).data
+}
+export async function createPortfolioSnapshot() {
+  return (await api.post('/portfolio-tracking/snapshot')).data
+}

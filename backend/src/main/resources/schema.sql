@@ -77,3 +77,23 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     UNIQUE INDEX uq_watchlist_ticker (ticker),
     INDEX idx_wl_asset_type (asset_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 6. portfolio_snapshots
+--    Daily point-in-time portfolio value snapshots.
+--    Mirrors com.example.hsbcproject.domain.PortfolioSnapshot
+-- ============================================================
+CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+    id                  BIGINT         NOT NULL AUTO_INCREMENT,
+    snapshot_date       DATE           NOT NULL,
+    total_value         DECIMAL(15,2)  NOT NULL,
+    total_cost_basis    DECIMAL(15,2)  NOT NULL,
+    total_gain_loss     DECIMAL(15,2)  NOT NULL,
+    total_gain_loss_pct DECIMAL(10,4)  NOT NULL,
+    total_positions     BIGINT         NOT NULL,
+    total_quantity      BIGINT         NOT NULL,
+    created_at          DATE           NOT NULL,
+
+    PRIMARY KEY (id),
+    UNIQUE INDEX uq_snapshot_date (snapshot_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
