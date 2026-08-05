@@ -1,8 +1,11 @@
 import { Menu, X } from 'lucide-react'
+import { useState } from 'react'
 import Sidebar from './Sidebar'
 import TopNavBar from './TopNavBar'
 
 function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsSidebarOpen, onAddInvestment, children }) {
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(true)
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.08),_transparent_34%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_100%)] text-slate-800">
       <div className="mx-auto flex min-h-screen w-full max-w-[1800px] flex-col overflow-hidden">
@@ -32,8 +35,16 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <aside className="hidden w-[240px] shrink-0 border-r border-slate-200/80 bg-white/80 px-4 py-4 backdrop-blur-sm lg:flex lg:w-[280px] lg:px-5 lg:py-5">
-            <Sidebar />
+          <aside
+            className={`hidden shrink-0 border-r border-slate-200/80 bg-white/80 backdrop-blur-sm transition-[width,padding] duration-200 lg:flex ${
+              isDesktopSidebarCollapsed ? 'w-[72px] px-2 py-3' : 'w-[272px] px-5 py-5'
+            }`}
+          >
+            <Sidebar
+              collapsible
+              collapsed={isDesktopSidebarCollapsed}
+              onToggleCollapse={() => setIsDesktopSidebarCollapsed((value) => !value)}
+            />
           </aside>
 
           <aside className={`fixed inset-y-0 left-0 z-50 w-[85%] max-w-[280px] shrink-0 border-r border-slate-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-sm transition-transform duration-200 lg:hidden ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -56,9 +67,7 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
                 <p className="text-sm font-medium uppercase tracking-[0.32em] text-slate-400">Portfolio overview</p>
                 <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Modern dashboard for your investments</h1>
               </div>
-              <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
-                Live backend-connected portfolio
-              </div>
+
             </div>
 
             {children}

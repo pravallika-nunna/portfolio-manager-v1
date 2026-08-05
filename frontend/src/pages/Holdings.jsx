@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, Trash2, X, TrendingDown } from 'lucide-react'
+import { Pencil, Trash2, X, TrendingDown } from 'lucide-react'
 import AsyncState from '../components/AsyncState'
 import ConfirmDialog from '../components/ConfirmDialog'
 import DataTableShell from '../components/DataTableShell'
+import InfoTooltip from '../components/InfoTooltip'
 import PageCard from '../components/PageCard'
 import RefreshAction from '../components/RefreshAction'
 import SectionHeader from '../components/SectionHeader'
 import {
-  createPortfolioItem,
   deletePortfolioItem,
   getApiErrorMessage,
   getPortfolioItems,
@@ -115,12 +115,18 @@ function HoldingModal({ isOpen, onClose, onSubmit, initialData, mode }) {
         </div>
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
           <label className="text-sm font-medium text-slate-700">
-            Ticker
+            <span className="inline-flex items-center gap-1.5">
+              Ticker
+              <InfoTooltip title="Ticker symbol" description="Short code used by exchanges to identify an asset, such as AAPL." />
+            </span>
             <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AAPL" className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`} />
             {errors.ticker ? <p className="mt-1 text-xs text-rose-500">{errors.ticker}</p> : null}
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Asset Type
+            <span className="inline-flex items-center gap-1.5">
+              Asset Type
+              <InfoTooltip title="Asset type" description="Classifies the holding as stock, bond, or crypto for reporting and risk analysis." />
+            </span>
             <select name="assetType" value={form.assetType} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.assetType ? 'border-rose-300' : 'border-slate-200'}`}>
               {ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
@@ -132,7 +138,10 @@ function HoldingModal({ isOpen, onClose, onSubmit, initialData, mode }) {
             {errors.quantity ? <p className="mt-1 text-xs text-rose-500">{errors.quantity}</p> : null}
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Purchase Price ($)
+            <span className="inline-flex items-center gap-1.5">
+              Purchase Price ($)
+              <InfoTooltip title="Purchase price" description="Price paid per unit when you bought this holding. It is used to calculate gains and losses." />
+            </span>
             <input required type="number" min="0.01" step="0.01" name="purchasePrice" value={form.purchasePrice} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.purchasePrice ? 'border-rose-300' : 'border-slate-200'}`} />
             {errors.purchasePrice ? <p className="mt-1 text-xs text-rose-500">{errors.purchasePrice}</p> : null}
           </label>
@@ -224,11 +233,6 @@ export default function Holdings({ refreshToken }) {
     })
   }, [items, pricesByTicker])
 
-  const handleAdd = () => {
-    setEditingItem(null)
-    setIsModalOpen(true)
-  }
-
   const handleEdit = (item) => {
     setEditingItem(item)
     setIsModalOpen(true)
@@ -236,11 +240,8 @@ export default function Holdings({ refreshToken }) {
 
   const handleSave = async (form) => {
     try {
-      if (editingItem) {
-        await updatePortfolioItem(editingItem.id, form)
-      } else {
-        await createPortfolioItem(form)
-      }
+      if (!editingItem) return false
+      await updatePortfolioItem(editingItem.id, form)
       await load()
       return true
     } catch (err) {
@@ -277,13 +278,12 @@ export default function Holdings({ refreshToken }) {
           title="Holdings"
           description="Portfolio positions + live prices from backend price service."
           countLabel={`${items.length} positions`}
+          info={{
+            title: 'Holdings',
+            description: 'Your current portfolio positions. Use this table to review live value and manage each holding.',
+          }}
           actions={(
-            <>
-              <RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />
-              <button onClick={handleAdd} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                <Plus size={15} /> Add Holding
-              </button>
-            </>
+            <RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />
           )}
         />
 
@@ -291,9 +291,19 @@ export default function Holdings({ refreshToken }) {
 
         {!loading && !error && (
           <DataTableShell
-            headers={['Ticker', 'Asset Type', 'Quantity', 'Purchase Price', 'Live Price', '24h Change', 'Current Value', 'Unrealized P/L', 'Actions']}
+            headers={[
+              { key: 'ticker', label: 'Ticker', info: { title: 'Ticker', description: 'Short symbol that identifies the asset.' } },
+              { key: 'asset-type', label: 'Asset Type', info: { title: 'Asset type', description: 'Investment category such as stock, bond, or crypto.' } },
+              { key: 'quantity', label: 'Quantity', info: { title: 'Quantity', description: 'Number of units you currently own.' } },
+              { key: 'purchase-price', label: 'Purchase Price', info: { title: 'Purchase price', description: 'Average price per unit paid when acquired.' } },
+              { key: 'live-price', label: 'Live Price', info: { title: 'Live price', description: 'Latest available market price from the price service.' } },
+              { key: 'change-24h', label: '24h Change', info: { title: '24-hour change', description: 'Percentage movement in price over the past 24 hours.' } },
+              { key: 'current-value', label: 'Current Value', info: { title: 'Current value', description: 'Estimated value now, calculated as live price multiplied by quantity.' } },
+              { key: 'unrealized', label: 'Unrealized P/L', info: { title: 'Unrealized gain/loss', description: 'Potential profit or loss on holdings you have not sold yet.' } },
+              { key: 'actions', label: 'Actions', info: { title: 'Actions', description: 'Edit details, sell all units, or remove the holding.' } },
+            ]}
             hasRows={tableRows.length > 0}
-            emptyMessage="No holdings found. Add your first holding above."
+            emptyMessage="No holdings found yet."
             colSpan={9}
           >
             {tableRows.map((item) => (

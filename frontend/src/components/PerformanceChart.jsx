@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getAllPortfolioSnapshots, getPortfolioTracking } from '../services/portfolioService'
+import InfoTooltip from './InfoTooltip'
 
 const PERIODS = [
   { label: 'Daily', value: 'DAILY' },
@@ -76,7 +77,13 @@ export default function PerformanceChart() {
     <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">Portfolio Performance</h3>
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-lg font-semibold text-slate-900">Portfolio Performance</h3>
+            <InfoTooltip
+              title="Portfolio performance chart"
+              description="This chart tracks your portfolio value over time. Use the period filters to zoom in or out and compare trends."
+            />
+          </div>
           <p className="text-sm text-slate-500">
             {metrics?.periodLabel ?? 'Portfolio value over time'}
           </p>

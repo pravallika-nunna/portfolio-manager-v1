@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Clock3, ExternalLink, FileText, LifeBuoy, MailQuestion, MessageSquareText, Search } from 'lucide-react'
 import Accordion from '../components/Accordion'
+import InfoTooltip from '../components/InfoTooltip'
 import PageCard from '../components/PageCard'
 import SectionHeader from '../components/SectionHeader'
 import StatCard from '../components/StatCard'
@@ -55,9 +56,9 @@ export default function Support() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard title="Available FAQs" value={String(faqItems.length)} icon={LifeBuoy} subtle />
-        <StatCard title="Support Channels" value={String(supportChannels.length)} icon={MessageSquareText} subtle />
-        <StatCard title="Typical Resolution" value="< 24 hours" icon={Clock3} subtle />
+        <StatCard title="Available FAQs" value={String(faqItems.length)} icon={LifeBuoy} subtle info={{ title: 'Available FAQs', description: 'Total number of help answers currently available on this page.' }} />
+        <StatCard title="Support Channels" value={String(supportChannels.length)} icon={MessageSquareText} subtle info={{ title: 'Support channels', description: 'Different ways to contact support based on your issue.' }} />
+        <StatCard title="Typical Resolution" value="< 24 hours" icon={Clock3} subtle info={{ title: 'Typical resolution', description: 'Average time support takes to respond to common requests.' }} />
       </div>
 
       <PageCard className="p-5">
@@ -65,6 +66,10 @@ export default function Support() {
           title="Frequently Asked Questions"
           description="Quick answers to common questions about holdings, pricing, and portfolio workflows."
           countLabel={`${filteredFaqs.length} items`}
+          info={{
+            title: 'FAQ section',
+            description: 'Find quick answers to common product questions before contacting support.',
+          }}
         />
         <div className="mb-5">
           <label htmlFor="faq-search" className="sr-only">Search FAQs</label>
@@ -111,6 +116,10 @@ export default function Support() {
           title="Contact Support"
           description="Choose the best channel based on your issue type."
           countLabel={`${supportChannels.length} channels`}
+          info={{
+            title: 'Contact support',
+            description: 'Pick the channel that best matches your request for faster help.',
+          }}
         />
         <div className="grid gap-3 xl:grid-cols-3">
           {supportChannels.map(({ title, description, value, icon, href }) => {
@@ -129,7 +138,10 @@ export default function Support() {
                   <Icon size={16} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{title}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-slate-900">{title}</p>
+                    <InfoTooltip title={title} description={description} />
+                  </div>
                   <p className="mt-1 text-sm text-slate-600">{description}</p>
                   <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-800">
                     {value}

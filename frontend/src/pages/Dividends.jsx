@@ -3,6 +3,7 @@ import { Coins, Plus, Trash2, X } from 'lucide-react'
 import AsyncState from '../components/AsyncState'
 import ConfirmDialog from '../components/ConfirmDialog'
 import DataTableShell from '../components/DataTableShell'
+import InfoTooltip from '../components/InfoTooltip'
 import PageCard from '../components/PageCard'
 import SectionHeader from '../components/SectionHeader'
 import StatCard from '../components/StatCard'
@@ -108,12 +109,18 @@ function DividendModal({ isOpen, onClose, onSubmit }) {
 
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
           <label className="text-sm font-medium text-slate-700">
-            Ticker
+            <span className="inline-flex items-center gap-1.5">
+              Ticker
+              <InfoTooltip title="Ticker symbol" description="Short code used to identify the company or asset paying the dividend." />
+            </span>
             <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AAPL" className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`} />
             {errors.ticker ? <p className="mt-1 text-xs text-rose-500">{errors.ticker}</p> : null}
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Dividend per Share ($)
+            <span className="inline-flex items-center gap-1.5">
+              Dividend per Share ($)
+              <InfoTooltip title="Dividend per share" description="Cash dividend paid for each share you held on the dividend date." />
+            </span>
             <input required type="number" min="0.01" step="0.01" name="dividendPerShare" value={form.dividendPerShare} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.dividendPerShare ? 'border-rose-300' : 'border-slate-200'}`} />
             {errors.dividendPerShare ? <p className="mt-1 text-xs text-rose-500">{errors.dividendPerShare}</p> : null}
           </label>
@@ -201,14 +208,18 @@ export default function Dividends() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard title="Total Dividends (All Holdings)" value={currency.format(total)} icon={Coins} />
-        <StatCard title="Visible Rows Total" value={currency.format(totalFromRows)} icon={Coins} />
+        <StatCard title="Total Dividends (All Holdings)" value={currency.format(total)} icon={Coins} info={{ title: 'Total dividends', description: 'Total dividend income recorded across all holdings.' }} />
+        <StatCard title="Visible Rows Total" value={currency.format(totalFromRows)} icon={Coins} info={{ title: 'Visible rows total', description: 'Sum of dividends from the currently filtered table rows.' }} />
       </div>
 
       <PageCard className="p-5">
         <SectionHeader
           title="Dividends"
           description="Record, filter, and manage dividend payments."
+          info={{
+            title: 'Dividends',
+            description: 'Track dividend payments and monitor income from your holdings.',
+          }}
           actions={(
             <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
               <Plus size={15} /> Add Dividend
@@ -218,7 +229,10 @@ export default function Dividends() {
 
         <div className="mb-4 flex flex-wrap items-end gap-2">
           <label className="text-sm font-medium text-slate-700">
-            Filter by ticker
+            <span className="inline-flex items-center gap-1.5">
+              Filter by ticker
+              <InfoTooltip title="Ticker filter" description="Show only dividend entries for one ticker symbol." />
+            </span>
             <input
               value={tickerFilter}
               onChange={(e) => setTickerFilter(e.target.value)}
@@ -234,7 +248,14 @@ export default function Dividends() {
 
         {!loading && !error && (
           <DataTableShell
-            headers={['Ticker', 'Dividend/Share', 'Shares Held', 'Total Dividend', 'Dividend Date', 'Actions']}
+            headers={[
+              { key: 'ticker', label: 'Ticker', info: { title: 'Ticker', description: 'Symbol of the asset that paid the dividend.' } },
+              { key: 'dividend-per-share', label: 'Dividend/Share', info: { title: 'Dividend per share', description: 'Amount paid for each share you held.' } },
+              { key: 'shares-held', label: 'Shares Held', info: { title: 'Shares held', description: 'Number of shares owned when the dividend was paid.' } },
+              { key: 'total-dividend', label: 'Total Dividend', info: { title: 'Total dividend', description: 'Total cash received for this entry, calculated as dividend per share times shares held.' } },
+              { key: 'dividend-date', label: 'Dividend Date', info: { title: 'Dividend date', description: 'Date when the dividend payment was recorded.' } },
+              { key: 'actions', label: 'Actions', info: { title: 'Actions', description: 'Remove a dividend record.' } },
+            ]}
             hasRows={items.length > 0}
             emptyMessage="No dividends found yet. Record a dividend to get started."
             colSpan={6}

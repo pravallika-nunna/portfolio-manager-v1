@@ -1,4 +1,4 @@
-import { Plus, Trash2, X } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import AsyncState from '../components/AsyncState'
 import ConfirmDialog from '../components/ConfirmDialog'
 import DataTableShell from '../components/DataTableShell'
@@ -6,7 +6,6 @@ import PageCard from '../components/PageCard'
 import RefreshAction from '../components/RefreshAction'
 import SectionHeader from '../components/SectionHeader'
 import {
-  createTransaction,
   deleteTransaction,
   getApiErrorMessage,
   getPrice,
@@ -15,157 +14,12 @@ import {
 import { currency } from '../utils/formatters'
 import { useEffect, useMemo, useState } from 'react'
 
-const ASSET_TYPES = ['STOCK', 'BOND', 'CRYPTO']
-const TX_TYPES = ['BUY', 'SELL']
-const emptyForm = { ticker: '', assetType: 'STOCK', transactionType: 'BUY', quantity: 1, pricePerUnit: '', transactionDate: '', notes: '' }
-const TICKER_PATTERN = /^[A-Za-z.]{1,10}$/
-
-function validateTransactionForm(form) {
-  const errors = {}
-  if (!form.ticker?.trim()) {
-    errors.ticker = 'Please enter a ticker symbol.'
-  } else if (!TICKER_PATTERN.test(form.ticker.trim())) {
-    errors.ticker = 'Use letters or dot only, up to 10 characters.'
-  }
-  if (!form.assetType) {
-    errors.assetType = 'Please select an asset type.'
-  }
-  if (!form.transactionType) {
-    errors.transactionType = 'Please select a transaction type.'
-  }
-  if (!Number.isInteger(Number(form.quantity)) || Number(form.quantity) < 1) {
-    errors.quantity = 'Quantity must be a whole number of at least 1.'
-  }
-  if (form.pricePerUnit === '' || Number(form.pricePerUnit) <= 0) {
-    errors.pricePerUnit = 'Price per unit must be greater than 0.'
-  }
-  if (!form.transactionDate) {
-    errors.transactionDate = 'Please select a transaction date.'
-  }
-  return errors
-}
-
-function TransactionModal({ isOpen, onClose, onSubmit }) {
-  const [form, setForm] = useState(emptyForm)
-  const [errors, setErrors] = useState({})
-  const [submitError, setSubmitError] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (isOpen) {
-      setForm(emptyForm)
-      setErrors({})
-      setSubmitError('')
-      setIsSubmitting(false)
-    }
-  }, [isOpen])
-
-  if (!isOpen) return null
-  const dialogTitleId = 'transaction-modal-title'
-  const dialogDescriptionId = 'transaction-modal-description'
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: name === 'quantity' ? Number(value) : value }))
-    setErrors((prev) => ({ ...prev, [name]: undefined }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const nextErrors = validateTransactionForm(form)
-    setErrors(nextErrors)
-    setSubmitError('')
-    if (Object.keys(nextErrors).length > 0) return
-
-    setIsSubmitting(true)
-    const ok = await onSubmit({
-      ...form,
-      ticker: form.ticker.trim().toUpperCase(),
-      pricePerUnit: parseFloat(form.pricePerUnit),
-      quantity: parseInt(form.quantity, 10),
-    })
-    setIsSubmitting(false)
-
-    if (ok) {
-      onClose()
-      return
-    }
-    setSubmitError('We could not save this transaction. Please check the details and try again.')
-  }
-
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={dialogTitleId}
-        aria-describedby={dialogDescriptionId}
-        className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 id={dialogTitleId} className="text-xl font-semibold text-slate-900">Record Transaction</h3>
-            <p id={dialogDescriptionId} className="text-sm text-slate-500">Log a buy or sell trade.</p>
-          </div>
-          <button type="button" aria-label="Close transaction form" disabled={isSubmitting} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"><X size={18} /></button>
-        </div>
-        <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
-          <label className="text-sm font-medium text-slate-700">
-            Ticker
-            <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AAPL" className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`} />
-            {errors.ticker ? <p className="mt-1 text-xs text-rose-500">{errors.ticker}</p> : null}
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Asset Type
-            <select name="assetType" value={form.assetType} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.assetType ? 'border-rose-300' : 'border-slate-200'}`}>
-              {ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            {errors.assetType ? <p className="mt-1 text-xs text-rose-500">{errors.assetType}</p> : null}
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Type
-            <select name="transactionType" value={form.transactionType} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.transactionType ? 'border-rose-300' : 'border-slate-200'}`}>
-              {TX_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            {errors.transactionType ? <p className="mt-1 text-xs text-rose-500">{errors.transactionType}</p> : null}
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Quantity
-            <input required type="number" min="1" name="quantity" value={form.quantity} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.quantity ? 'border-rose-300' : 'border-slate-200'}`} />
-            {errors.quantity ? <p className="mt-1 text-xs text-rose-500">{errors.quantity}</p> : null}
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Price per Unit ($)
-            <input required type="number" min="0.01" step="0.01" name="pricePerUnit" value={form.pricePerUnit} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.pricePerUnit ? 'border-rose-300' : 'border-slate-200'}`} />
-            {errors.pricePerUnit ? <p className="mt-1 text-xs text-rose-500">{errors.pricePerUnit}</p> : null}
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Transaction Date
-            <input required type="date" name="transactionDate" value={form.transactionDate} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.transactionDate ? 'border-rose-300' : 'border-slate-200'}`} />
-            {errors.transactionDate ? <p className="mt-1 text-xs text-rose-500">{errors.transactionDate}</p> : null}
-          </label>
-          <label className="sm:col-span-2 text-sm font-medium text-slate-700">
-            Notes (optional)
-            <input name="notes" value={form.notes} onChange={handleChange} placeholder="Optional notes..." className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm" />
-          </label>
-          {submitError ? <p role="alert" className="sm:col-span-2 text-sm text-rose-500">{submitError}</p> : null}
-          <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
-            <button type="button" disabled={isSubmitting} onClick={onClose} className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 disabled:opacity-50">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Save Transaction</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 export default function Transactions() {
   const [items, setItems] = useState([])
   const [pricesByTicker, setPricesByTicker] = useState({})
   const [loading, setLoading] = useState(true)
   const [priceLoading, setPriceLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   const loadPrices = async (rows) => {
@@ -218,17 +72,6 @@ export default function Transactions() {
     })
   }, [items, pricesByTicker])
 
-  const handleSave = async (form) => {
-    try {
-      await createTransaction(form)
-      await load()
-      return true
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'We could not save this transaction right now.'))
-      return false
-    }
-  }
-
   const handleConfirmDelete = async () => {
     try {
       await deleteTransaction(confirmDeleteId)
@@ -246,23 +89,31 @@ export default function Transactions() {
           title="Transactions"
           description="Buy and sell history with current market comparison."
           countLabel={`${items.length} records`}
-          actions={(
-            <>
-              <RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />
-              <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                <Plus size={15} /> Record Trade
-              </button>
-            </>
-          )}
+          info={{
+            title: 'Transactions',
+            description: 'History of completed buys and sells. Use this to review what you traded and when.',
+          }}
+          actions={<RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />}
         />
 
         <AsyncState loading={loading} error={error} loadingMessage="Loading transactions..." onRetry={load} />
 
         {!loading && !error && (
           <DataTableShell
-            headers={['Ticker', 'Type', 'Asset', 'Quantity', 'Price/Unit', 'Live Price', 'Diff', 'Total Value', 'Date', 'Actions']}
+            headers={[
+              { key: 'ticker', label: 'Ticker', info: { title: 'Ticker', description: 'Short symbol for the traded asset.' } },
+              { key: 'type', label: 'Type', info: { title: 'Trade type', description: 'BUY adds units to your portfolio; SELL removes units.' } },
+              { key: 'asset', label: 'Asset', info: { title: 'Asset type', description: 'Category of the traded instrument.' } },
+              { key: 'quantity', label: 'Quantity', info: { title: 'Quantity', description: 'Number of units traded in this transaction.' } },
+              { key: 'price-unit', label: 'Price/Unit', info: { title: 'Price per unit', description: 'Execution price for each unit in this trade.' } },
+              { key: 'live-price', label: 'Live Price', info: { title: 'Live price', description: 'Latest available market price for quick comparison.' } },
+              { key: 'diff', label: 'Diff', info: { title: 'Price difference', description: 'Difference between current price and transaction price per unit.' } },
+              { key: 'total-value', label: 'Total Value', info: { title: 'Total value', description: 'Transaction amount, usually quantity multiplied by price per unit.' } },
+              { key: 'date', label: 'Date', info: { title: 'Transaction date', description: 'Date this buy or sell was recorded.' } },
+              { key: 'actions', label: 'Actions', info: { title: 'Actions', description: 'Remove a transaction record from history.' } },
+            ]}
             hasRows={rows.length > 0}
-            emptyMessage="No transactions yet. Record your first trade to see it here."
+            emptyMessage="No transactions yet."
             colSpan={10}
           >
             {rows.map((item) => (
@@ -289,7 +140,6 @@ export default function Transactions() {
         )}
       </PageCard>
 
-      <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSave} />
       <ConfirmDialog isOpen={Boolean(confirmDeleteId)} title="Delete transaction" message="This will permanently remove this transaction record." onCancel={() => setConfirmDeleteId(null)} onConfirm={handleConfirmDelete} />
     </div>
   )

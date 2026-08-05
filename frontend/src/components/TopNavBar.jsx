@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, MoreHorizontal, Plus, Search, UserCircle2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, onSearch }) {
+export default function TopNavBar({ holdings, onAddInvestment, onSearch }) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -102,8 +102,6 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
               <div className="absolute right-0 mt-2 w-44 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
                 <button type="button" onClick={() => { navigate('/watchlist'); setIsMoreOpen(false) }} className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">View Watchlist</button>
                 <button type="button" onClick={() => { onAddInvestment?.(); setIsMoreOpen(false) }} className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">Add Investment</button>
-                <button type="button" className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">Settings</button>
-                <button type="button" className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">Sign Out</button>
               </div>
             ) : null}
           </div>
@@ -140,9 +138,7 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
             </button>
             {isProfileOpen ? (
               <div className="absolute right-0 mt-2 w-44 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
-                <button type="button" onClick={() => { onOpenProfile?.(); setIsProfileOpen(false) }} className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">View Profile</button>
-                <button type="button" className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">Settings</button>
-                <button type="button" className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">Sign Out</button>
+                <button type="button" onClick={() => { navigate('/profile'); setIsProfileOpen(false) }} className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50">View Profile</button>
               </div>
             ) : null}
           </div>

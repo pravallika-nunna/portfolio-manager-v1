@@ -58,9 +58,9 @@ export default function Tax() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard title="Estimated Total Tax Liability" value={currency.format(metrics.totalLiability)} icon={Calculator} />
-        <StatCard title="Estimated Total Unrealized Gain" value={currency.format(metrics.totalGain)} icon={TrendingUp} />
-        <StatCard title="Holdings with Positive Gain" value={String(metrics.positiveGainCount)} icon={Receipt} />
+        <StatCard title="Estimated Total Tax Liability" value={currency.format(metrics.totalLiability)} icon={Calculator} info={{ title: 'Estimated tax liability', description: 'Projected tax based on current gains and holding period. Final tax may differ at filing time.' }} />
+        <StatCard title="Estimated Total Unrealized Gain" value={currency.format(metrics.totalGain)} icon={TrendingUp} info={{ title: 'Estimated unrealized gain', description: 'Potential profit on investments you still hold at current prices.' }} />
+        <StatCard title="Holdings with Positive Gain" value={String(metrics.positiveGainCount)} icon={Receipt} info={{ title: 'Holdings with gain', description: 'Count of positions currently above their cost basis.' }} />
       </div>
 
       <PageCard className="p-5">
@@ -68,10 +68,19 @@ export default function Tax() {
           title="Tax Estimates"
           description="Short-term and long-term estimated tax by holding."
           countLabel={`${filteredItems.length} holdings`}
+          info={{
+            title: 'Tax estimates',
+            description: 'These estimates help you preview potential tax impact before selling. They are guidance, not tax advice.',
+          }}
         />
 
         <div className="mb-4">
           <FilterChips
+            label="Tax category"
+            info={{
+              title: 'Tax category filter',
+              description: 'Short-term usually means held one year or less. Long-term usually means held more than one year.',
+            }}
             options={CATEGORY_FILTERS}
             activeValue={activeFilter}
             onChange={setActiveFilter}
@@ -83,7 +92,18 @@ export default function Tax() {
 
         {!loading && !error && (
           <DataTableShell
-            headers={['Ticker', 'Asset', 'Purchase Date', 'Holding Days', 'Category', 'Cost Basis', 'Current Value', 'Gain', 'Rate', 'Estimated Tax']}
+            headers={[
+              { key: 'ticker', label: 'Ticker', info: { title: 'Ticker', description: 'Short market symbol for each holding.' } },
+              { key: 'asset', label: 'Asset', info: { title: 'Asset type', description: 'Investment category such as stock, bond, or crypto.' } },
+              { key: 'purchase-date', label: 'Purchase Date', info: { title: 'Purchase date', description: 'Date the holding was bought.' } },
+              { key: 'holding-days', label: 'Holding Days', info: { title: 'Holding days', description: 'Number of days between purchase date and today.' } },
+              { key: 'category', label: 'Category', info: { title: 'Tax category', description: 'Classifies gains as short-term or long-term based on holding period.' } },
+              { key: 'cost-basis', label: 'Cost Basis', info: { title: 'Cost basis', description: 'Original amount invested in this holding.' } },
+              { key: 'current-value', label: 'Current Value', info: { title: 'Current value', description: 'Estimated market value based on latest available price.' } },
+              { key: 'gain', label: 'Gain', info: { title: 'Gain', description: 'Difference between current value and cost basis.' } },
+              { key: 'rate', label: 'Rate', info: { title: 'Tax rate', description: 'Estimated tax rate applied for this holding category.' } },
+              { key: 'estimated-tax', label: 'Estimated Tax', info: { title: 'Estimated tax', description: 'Approximate tax due if this holding were sold now.' } },
+            ]}
             hasRows={filteredItems.length > 0}
             emptyMessage="No tax estimates found for this filter."
             colSpan={10}

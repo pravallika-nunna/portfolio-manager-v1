@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Coins, Landmark, Loader2, Search, TrendingUp, X, XCircle } from 'lucide-react'
 import { createInvestment, getApiErrorMessage, getStockQuote, searchInstruments } from '../services/investmentService'
+import InfoTooltip from './InfoTooltip'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -211,7 +212,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 id={titleId} className="text-xl font-semibold text-slate-900">Add Investment</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 id={titleId} className="text-xl font-semibold text-slate-900">Add Investment</h3>
+              <InfoTooltip title="Add investment" description="Use this form to add a new stock, bond, or crypto holding to your portfolio." />
+            </div>
             <p id={descriptionId} className="text-sm text-slate-500">Saved directly to your portfolio database.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close add investment dialog" className="rounded-full p-2 text-slate-500 hover:bg-slate-100">
@@ -240,7 +244,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
           <label className="relative text-sm font-medium text-slate-700 sm:col-span-2">
-            {searchLabel(form.assetType)}
+            <span className="inline-flex items-center gap-1.5">
+              {searchLabel(form.assetType)}
+              <InfoTooltip title="Instrument search" description="Type a company or asset name to find matching instruments and auto-fill details." />
+            </span>
             <div className="relative mt-1">
               <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -273,7 +280,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           </label>
 
           <label className="text-sm font-medium text-slate-700">
-            {form.assetType === 'CRYPTO' ? 'Symbol' : 'Ticker Symbol'}
+            <span className="inline-flex items-center gap-1.5">
+              {form.assetType === 'CRYPTO' ? 'Symbol' : 'Ticker Symbol'}
+              <InfoTooltip title="Ticker symbol" description="Short exchange code for the asset, like AAPL or BTC." />
+            </span>
             <input
               name="ticker"
               value={form.ticker}
@@ -287,7 +297,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
           {form.assetType === 'STOCK' ? (
             <label className="text-sm font-medium text-slate-700">
-              Sector
+              <span className="inline-flex items-center gap-1.5">
+                Sector
+                <InfoTooltip title="Sector" description="Industry group for the stock, useful for diversification and risk review." />
+              </span>
               <input
                 list="sector-suggestions"
                 name="sector"
@@ -329,7 +342,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
           {form.assetType === 'BOND' ? (
             <label className="text-sm font-medium text-slate-700">
-              Issuer
+              <span className="inline-flex items-center gap-1.5">
+                Issuer
+                <InfoTooltip title="Bond issuer" description="Organization that issued the bond and is responsible for repayment." />
+              </span>
               <input
                 name="issuer"
                 value={form.issuer}
@@ -342,7 +358,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           ) : null}
 
           <label className="text-sm font-medium text-slate-700">
-            {form.assetType === 'BOND' ? 'Quantity / Units' : 'Quantity'}
+            <span className="inline-flex items-center gap-1.5">
+              {form.assetType === 'BOND' ? 'Quantity / Units' : 'Quantity'}
+              <InfoTooltip title="Quantity" description="Number of units or shares purchased in this investment." />
+            </span>
             <input
               type="number"
               min="1"
@@ -356,7 +375,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           </label>
 
           <label className="text-sm font-medium text-slate-700">
-            Purchase Price ($){form.assetType === 'STOCK' && quote.status === 'success' ? ' · auto-filled' : ''}
+            <span className="inline-flex items-center gap-1.5">
+              Purchase Price ($){form.assetType === 'STOCK' && quote.status === 'success' ? ' · auto-filled' : ''}
+              <InfoTooltip title="Purchase price" description="Amount paid per unit when you bought the investment." />
+            </span>
             <div className="relative mt-1">
               <input
                 type="number"
@@ -377,7 +399,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
           {form.assetType === 'BOND' ? (
             <label className="text-sm font-medium text-slate-700">
-              Interest Rate % (if available)
+              <span className="inline-flex items-center gap-1.5">
+                Interest Rate % (if available)
+                <InfoTooltip title="Interest rate" description="Coupon rate for the bond, expressed as an annual percentage." />
+              </span>
               <input
                 type="number"
                 min="0"
@@ -394,7 +419,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
           {form.assetType === 'BOND' ? (
             <label className="text-sm font-medium text-slate-700">
-              Maturity Date
+              <span className="inline-flex items-center gap-1.5">
+                Maturity Date
+                <InfoTooltip title="Maturity date" description="Date when the bond principal is expected to be repaid." />
+              </span>
               <input
                 type="date"
                 name="maturityDate"
@@ -407,7 +435,10 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           ) : null}
 
           <label className="text-sm font-medium text-slate-700">
-            Purchase Date
+            <span className="inline-flex items-center gap-1.5">
+              Purchase Date
+              <InfoTooltip title="Purchase date" description="Date when you bought this investment. It affects return and tax calculations." />
+            </span>
             <input
               type="date"
               max={today()}

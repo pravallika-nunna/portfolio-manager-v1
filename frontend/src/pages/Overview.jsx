@@ -4,6 +4,7 @@ import SummaryCard from '../components/SummaryCard'
 import AllocationPieChart from '../components/AllocationPieChart'
 import PerformanceChart from '../components/PerformanceChart'
 import HoldingsTable from '../components/HoldingsTable'
+import InfoTooltip from '../components/InfoTooltip'
 import { getApiErrorMessage, getInvestments } from '../services/investmentService'
 import { getPrice } from '../services/portfolioService'
 import { getHoldingsMetrics } from '../utils/portfolioUtils'
@@ -15,30 +16,50 @@ function createSummaryCards(metrics) {
       value: formatCurrencyValue(metrics.totalValue),
       change: metrics.gainPct,
       icon: BriefcaseBusiness,
+      info: {
+        title: 'Total portfolio value',
+        description: 'The current combined market value of all your investments.',
+      },
     },
     {
       title: 'Total Invested',
       value: formatCurrencyValue(metrics.totalInvested),
       change: undefined,
       icon: Landmark,
+      info: {
+        title: 'Total invested',
+        description: 'The total amount you have put into your portfolio so far.',
+      },
     },
     {
       title: 'Total Stock Investment',
       value: formatCurrencyValue(metrics.byAssetType.stock || 0),
       change: undefined,
       icon: Sparkles,
+      info: {
+        title: 'Stock allocation',
+        description: 'How much of your money is currently allocated to stocks.',
+      },
     },
     {
       title: 'Total Bond Investment',
       value: formatCurrencyValue(metrics.byAssetType.bond || 0),
       change: undefined,
       icon: Landmark,
+      info: {
+        title: 'Bond allocation',
+        description: 'How much of your money is currently allocated to bonds.',
+      },
     },
     {
       title: 'Total Crypto Investment',
       value: formatCurrencyValue(metrics.byAssetType.crypto || 0),
       change: undefined,
       icon: Coins,
+      info: {
+        title: 'Crypto allocation',
+        description: 'How much of your money is currently allocated to crypto assets.',
+      },
     },
   ]
 }
@@ -140,8 +161,22 @@ export default function Overview({ searchQuery: searchQueryProp, refreshToken })
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <AllocationPieChart title="Portfolio Allocation by Sector" data={allocations.sectors} />
-        <AllocationPieChart title="Portfolio Allocation by Asset Type" data={allocations.assetTypes} />
+        <AllocationPieChart
+          title="Portfolio Allocation by Sector"
+          data={allocations.sectors}
+          info={{
+            title: 'Sector allocation',
+            description: 'Shows how your portfolio is distributed across sectors. It helps you spot concentration risk.',
+          }}
+        />
+        <AllocationPieChart
+          title="Portfolio Allocation by Asset Type"
+          data={allocations.assetTypes}
+          info={{
+            title: 'Asset type allocation',
+            description: 'Shows the split between stocks, bonds, and crypto so you can balance risk and stability.',
+          }}
+        />
       </div>
 
       <PerformanceChart />
@@ -149,7 +184,13 @@ export default function Overview({ searchQuery: searchQueryProp, refreshToken })
       <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Portfolio Holdings</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-lg font-semibold text-slate-900">Portfolio Holdings</h3>
+              <InfoTooltip
+                title="Portfolio holdings"
+                description="This table lists all investments you currently own with estimated live pricing and profit/loss."
+              />
+            </div>
             <p className="text-sm text-slate-500">Live holdings from your portfolio, priced with the backend price service.</p>
           </div>
           <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">

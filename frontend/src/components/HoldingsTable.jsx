@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ArrowUpDown } from 'lucide-react'
 import { currency, formatPercent } from '../utils/formatters'
+import InfoTooltip from './InfoTooltip'
 
 const columns = [
   { key: 'ticker', label: 'Symbol' },
@@ -8,11 +9,11 @@ const columns = [
   { key: 'sector', label: 'Sector' },
   { key: 'assetType', label: 'Asset Type' },
   { key: 'quantity', label: 'Quantity' },
-  { key: 'purchasePrice', label: 'Avg Buy Price' },
-  { key: 'currentPrice', label: 'Current Price' },
-  { key: 'totalValue', label: 'Total Value' },
-  { key: 'profitLoss', label: 'Profit/Loss' },
-  { key: 'profitLossPct', label: 'Profit/Loss %' },
+  { key: 'purchasePrice', label: 'Avg Buy Price', info: { title: 'Average buy price', description: 'The average price you paid for each unit of this holding.' } },
+  { key: 'currentPrice', label: 'Current Price', info: { title: 'Current price', description: 'The latest available market price used to estimate value.' } },
+  { key: 'totalValue', label: 'Total Value', info: { title: 'Total value', description: 'Estimated market value right now. It is current price multiplied by quantity.' } },
+  { key: 'profitLoss', label: 'Profit/Loss', info: { title: 'Unrealized gain or loss', description: 'Potential profit or loss on this holding if sold now. It uses current value minus your cost basis.' } },
+  { key: 'profitLossPct', label: 'Profit/Loss %', info: { title: 'Unrealized return percentage', description: 'Potential percentage gain or loss on this holding based on your average buy price.' } },
 ]
 
 export default function HoldingsTable({ holdings }) {
@@ -59,6 +60,7 @@ export default function HoldingsTable({ holdings }) {
                     aria-label={`Sort by ${column.label}`}
                   >
                     <span>{column.label}</span>
+                    {column.info ? <InfoTooltip {...column.info} /> : null}
                     <ArrowUpDown size={14} className="text-slate-400" />
                   </button>
                 </th>

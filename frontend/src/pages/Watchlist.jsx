@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Eye, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import AsyncState from '../components/AsyncState'
 import ConfirmDialog from '../components/ConfirmDialog'
+import InfoTooltip from '../components/InfoTooltip'
 import PageCard from '../components/PageCard'
 import RefreshAction from '../components/RefreshAction'
 import SectionHeader from '../components/SectionHeader'
@@ -115,7 +116,10 @@ function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmi
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-slate-700">
-            Find ticker
+            <span className="inline-flex items-center gap-1.5">
+              Find ticker
+              <InfoTooltip title="Find ticker" description="Search by company or asset name, then pick a ticker to auto-fill the form." />
+            </span>
             <div className="relative mt-1">
               <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -149,12 +153,18 @@ function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmi
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-slate-700">
-            Ticker
+            <span className="inline-flex items-center gap-1.5">
+              Ticker
+              <InfoTooltip title="Ticker symbol" description="Short market symbol for the asset you want to track." />
+            </span>
             <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AMZN" className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`} />
             {errors.ticker ? <p className="mt-1 text-xs text-rose-500">{errors.ticker}</p> : null}
           </label>
           <label className="block text-sm font-medium text-slate-700">
-            Asset Type
+            <span className="inline-flex items-center gap-1.5">
+              Asset Type
+              <InfoTooltip title="Asset type" description="Helps categorize your watchlist items for faster filtering and context." />
+            </span>
             <select name="assetType" value={form.assetType} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.assetType ? 'border-rose-300' : 'border-slate-200'}`}>
               {ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
@@ -272,6 +282,10 @@ export default function Watchlist() {
           title="Watchlist"
           description="Instruments you are tracking with live price snapshots."
           countLabel={`${items.length} tracked`}
+          info={{
+            title: 'Watchlist',
+            description: 'Track assets without adding them to your portfolio so you can monitor price movement first.',
+          }}
           actions={(
             <>
               <RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />
@@ -320,7 +334,10 @@ export default function Watchlist() {
 
                   <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
                     <div>
-                      <p className="text-xs text-slate-400">Live Price</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-slate-400">Live Price</p>
+                        <InfoTooltip title="Live price" description="Latest available market price for this watchlist asset." />
+                      </div>
                       <p className="text-sm font-semibold text-slate-900">{live?.currentPrice ? currency.format(live.currentPrice) : '—'}</p>
                     </div>
                     <div className={`rounded-full px-2.5 py-1 text-xs font-semibold ${isPositive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
