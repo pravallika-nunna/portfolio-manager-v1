@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Eye, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react'
+import { Eye, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import AsyncState from '../components/AsyncState'
 import ConfirmDialog from '../components/ConfirmDialog'
+import PageCard from '../components/PageCard'
+import RefreshAction from '../components/RefreshAction'
+import SectionHeader from '../components/SectionHeader'
 import {
   addToWatchlist,
   getApiErrorMessage,
@@ -13,10 +17,27 @@ import { tickerCatalog } from '../data/tickerCatalog'
 
 const ASSET_TYPES = ['STOCK', 'BOND', 'CRYPTO']
 const emptyForm = { ticker: '', assetType: 'STOCK' }
+const TICKER_PATTERN = /^[A-Za-z.]{1,10}$/
+
+function validateWatchlistForm(form) {
+  const errors = {}
+  if (!form.ticker?.trim()) {
+    errors.ticker = 'Please enter a ticker symbol.'
+  } else if (!TICKER_PATTERN.test(form.ticker.trim())) {
+    errors.ticker = 'Use letters or dot only, up to 10 characters.'
+  }
+  if (!form.assetType) {
+    errors.assetType = 'Please select an asset type.'
+  }
+  return errors
+}
 
 function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmit }) {
   const [form, setForm] = useState(emptyForm)
   const [lookup, setLookup] = useState('')
+  const [errors, setErrors] = useState({})
+  const [submitError, setSubmitError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -29,6 +50,9 @@ function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmi
       setForm(emptyForm)
       setLookup('')
     }
+    setErrors({})
+    setSubmitError('')
+    setIsSubmitting(false)
   }, [isOpen, initialData])
 
   const options = useMemo(() => {
@@ -41,8 +65,14 @@ function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmi
   }, [lookup])
 
   if (!isOpen) return null
+  const dialogTitleId = mode === 'edit' ? 'edit-watchlist-title' : 'add-watchlist-title'
+  const dialogDescriptionId = mode === 'edit' ? 'edit-watchlist-description' : 'add-watchlist-description'
 
-  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
+  }
 
   const selectOption = (item) => {
     setForm((prev) => ({ ...prev, ticker: item.ticker, assetType: item.assetType }))
@@ -51,19 +81,36 @@ function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmi
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const nextErrors = validateWatchlistForm(form)
+    setErrors(nextErrors)
+    setSubmitError('')
+    if (Object.keys(nextErrors).length > 0) return
+
+    setIsSubmitting(true)
     const ok = await onSubmit({ ...form, ticker: form.ticker.trim().toUpperCase() })
-    if (ok) onClose()
+    setIsSubmitting(false)
+    if (ok) {
+      onClose()
+      return
+    }
+    setSubmitError('We could not save this watchlist item. Please review and try again.')
   }
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-sm rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={dialogTitleId}
+        aria-describedby={dialogDescriptionId}
+        className="w-full max-w-sm rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl"
+      >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-semibold text-slate-900">{mode === 'edit' ? 'Edit Watchlist Item' : 'Add to Watchlist'}</h3>
-            <p className="text-sm text-slate-500">Search by company name or ticker symbol.</p>
+            <h3 id={dialogTitleId} className="text-xl font-semibold text-slate-900">{mode === 'edit' ? 'Edit Watchlist Item' : 'Add to Watchlist'}</h3>
+            <p id={dialogDescriptionId} className="text-sm text-slate-500">Search by company name or ticker symbol.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button>
+          <button type="button" aria-label="Close watchlist form" disabled={isSubmitting} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"><X size={18} /></button>
         </div>
 
         <div className="mb-4">
@@ -103,17 +150,20 @@ function AddWatchlistModal({ isOpen, mode = 'add', initialData, onClose, onSubmi
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-slate-700">
             Ticker
-            <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AMZN" className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm uppercase" />
+            <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AMZN" className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`} />
+            {errors.ticker ? <p className="mt-1 text-xs text-rose-500">{errors.ticker}</p> : null}
           </label>
           <label className="block text-sm font-medium text-slate-700">
             Asset Type
-            <select name="assetType" value={form.assetType} onChange={handleChange} className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm">
+            <select name="assetType" value={form.assetType} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.assetType ? 'border-rose-300' : 'border-slate-200'}`}>
               {ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
+            {errors.assetType ? <p className="mt-1 text-xs text-rose-500">{errors.assetType}</p> : null}
           </label>
+          {submitError ? <p role="alert" className="text-sm text-rose-500">{submitError}</p> : null}
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">Cancel</button>
-            <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{mode === 'edit' ? 'Save Changes' : 'Add to Watchlist'}</button>
+            <button type="button" disabled={isSubmitting} onClick={onClose} className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 disabled:opacity-50">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{mode === 'edit' ? 'Save Changes' : 'Add to Watchlist'}</button>
           </div>
         </form>
       </div>
@@ -160,7 +210,7 @@ export default function Watchlist() {
       setItems(watchlist)
       await loadPrices(watchlist)
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not load watchlist.'))
+      setError(getApiErrorMessage(err, 'We could not load your watchlist right now.'))
     } finally {
       setLoading(false)
     }
@@ -200,7 +250,7 @@ export default function Watchlist() {
       await load()
       return true
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not save watchlist item.'))
+      setError(getApiErrorMessage(err, 'We could not save this watchlist item right now.'))
       return false
     }
   }
@@ -211,37 +261,34 @@ export default function Watchlist() {
       setConfirmDeleteId(null)
       await load()
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not remove ticker from watchlist.'))
+      setError(getApiErrorMessage(err, 'We could not remove this ticker from your watchlist right now.'))
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Watchlist</h2>
-            <p className="text-sm text-slate-500">Instruments you are tracking with live price snapshots.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">{items.length} tracked</div>
-            <button onClick={() => loadPrices(items)} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-              <RefreshCw size={14} className={priceLoading ? 'animate-spin' : ''} /> Refresh Prices
-            </button>
-            <button onClick={openAddModal} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-              <Plus size={15} /> Add Ticker
-            </button>
-          </div>
-        </div>
+      <PageCard className="p-5">
+        <SectionHeader
+          title="Watchlist"
+          description="Instruments you are tracking with live price snapshots."
+          countLabel={`${items.length} tracked`}
+          actions={(
+            <>
+              <RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />
+              <button onClick={openAddModal} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                <Plus size={15} /> Add Ticker
+              </button>
+            </>
+          )}
+        />
 
-        {loading && <p className="py-10 text-center text-sm text-slate-500">Loading watchlist...</p>}
-        {error && <p className="py-10 text-center text-sm text-rose-500">{error}</p>}
+        <AsyncState loading={loading} error={error} loadingMessage="Loading watchlist..." onRetry={load} />
 
         {!loading && !error && items.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="mb-3 rounded-2xl bg-slate-100 p-4 text-slate-400"><Eye size={28} /></div>
             <p className="font-medium text-slate-700">Your watchlist is empty</p>
-            <p className="mt-1 text-sm text-slate-500">Add a ticker above to start tracking it.</p>
+            <p className="mt-1 text-sm text-slate-500">Add a ticker above to start tracking prices and daily changes.</p>
           </div>
         )}
 
@@ -262,10 +309,10 @@ export default function Watchlist() {
                       </div>
                     </div>
                     <div className="ml-2 flex items-center gap-2">
-                      <button onClick={() => openEditModal(item)} className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100">
+                      <button type="button" aria-label={`Edit watchlist item ${item.ticker}`} onClick={() => openEditModal(item)} className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => setConfirmDeleteId(item.id)} className="rounded-xl border border-rose-100 p-2 text-rose-500 hover:bg-rose-50">
+                      <button type="button" aria-label={`Remove ${item.ticker} from watchlist`} onClick={() => setConfirmDeleteId(item.id)} className="rounded-xl border border-rose-100 p-2 text-rose-500 hover:bg-rose-50">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -285,7 +332,7 @@ export default function Watchlist() {
             })}
           </div>
         )}
-      </div>
+      </PageCard>
 
       <AddWatchlistModal
         isOpen={isModalOpen}

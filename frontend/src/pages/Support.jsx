@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Clock3, ExternalLink, FileText, LifeBuoy, MailQuestion, MessageSquareText, Search } from 'lucide-react'
+import { Clock3, ExternalLink, FileText, LifeBuoy, MailQuestion, MessageSquareText, Search } from 'lucide-react'
+import Accordion from '../components/Accordion'
+import PageCard from '../components/PageCard'
+import SectionHeader from '../components/SectionHeader'
+import StatCard from '../components/StatCard'
 import { faqItems } from '../data/faq'
 import { supportChannels } from '../data/supportChannel'
 
@@ -7,18 +11,6 @@ const ICON_BY_CHANNEL = {
   mail: MailQuestion,
   chat: MessageSquareText,
   docs: FileText,
-}
-
-function StatCard({ title, value, icon: Icon }) {
-  return (
-    <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4 shadow-[0_8px_20px_rgba(15,23,42,0.03)]">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
-        <Icon size={18} className="text-slate-400" />
-      </div>
-      <p className="mt-3 text-xl font-semibold text-slate-800">{value}</p>
-    </div>
-  )
 }
 
 export default function Support() {
@@ -63,21 +55,17 @@ export default function Support() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard title="Available FAQs" value={String(faqItems.length)} icon={LifeBuoy} />
-        <StatCard title="Support Channels" value={String(supportChannels.length)} icon={MessageSquareText} />
-        <StatCard title="Typical Resolution" value="< 24 hours" icon={Clock3} />
+        <StatCard title="Available FAQs" value={String(faqItems.length)} icon={LifeBuoy} subtle />
+        <StatCard title="Support Channels" value={String(supportChannels.length)} icon={MessageSquareText} subtle />
+        <StatCard title="Typical Resolution" value="< 24 hours" icon={Clock3} subtle />
       </div>
 
-      <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Frequently Asked Questions</h2>
-            <p className="text-sm text-slate-600">Quick answers to common questions about holdings, pricing, and portfolio workflows.</p>
-          </div>
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
-            {filteredFaqs.length} items
-          </div>
-        </div>
+      <PageCard className="p-5">
+        <SectionHeader
+          title="Frequently Asked Questions"
+          description="Quick answers to common questions about holdings, pricing, and portfolio workflows."
+          countLabel={`${filteredFaqs.length} items`}
+        />
         <div className="mb-5">
           <label htmlFor="faq-search" className="sr-only">Search FAQs</label>
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -103,50 +91,27 @@ export default function Support() {
             {groupedFaqs.map(({ category, items }) => (
               <section key={category} className="space-y-2.5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{category}</p>
-                <div className="space-y-2.5">
-                  {items.map((item, index) => {
-                    const faqKey = `${category}-${item.question}-${index}`.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                    const isOpen = openFaqs.includes(faqKey)
-                    const buttonId = `faq-button-${faqKey}`
-                    const panelId = `faq-panel-${faqKey}`
-                    return (
-                      <div key={faqKey} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                        <button
-                          id={buttonId}
-                          type="button"
-                          onClick={() => toggleFaq(faqKey)}
-                          aria-expanded={isOpen}
-                          aria-controls={panelId}
-                          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                        >
-                          <span className="text-sm font-semibold">{item.question}</span>
-                          <ChevronDown size={16} className={`shrink-0 text-slate-600 transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
-                        </button>
-                        {isOpen ? (
-                          <div id={panelId} role="region" aria-labelledby={buttonId} className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                            {item.answer}
-                          </div>
-                        ) : null}
-                      </div>
-                    )
-                  })}
-                </div>
+                <Accordion
+                  items={items.map((item, index) => ({
+                    key: `${category}-${item.question}-${index}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                    title: item.question,
+                    content: item.answer,
+                  }))}
+                  openKeys={openFaqs}
+                  onToggle={toggleFaq}
+                />
               </section>
             ))}
           </div>
         )}
-      </div>
+      </PageCard>
 
-      <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">Contact Support</h3>
-            <p className="text-sm text-slate-600">Choose the best channel based on your issue type.</p>
-          </div>
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
-            {supportChannels.length} channels
-          </div>
-        </div>
+      <PageCard className="p-5">
+        <SectionHeader
+          title="Contact Support"
+          description="Choose the best channel based on your issue type."
+          countLabel={`${supportChannels.length} channels`}
+        />
         <div className="grid gap-3 xl:grid-cols-3">
           {supportChannels.map(({ title, description, value, icon, href }) => {
             const Icon = ICON_BY_CHANNEL[icon] || MailQuestion
@@ -176,7 +141,7 @@ export default function Support() {
             )
           })}
         </div>
-      </div>
+      </PageCard>
     </div>
   )
 }

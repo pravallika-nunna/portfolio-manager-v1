@@ -58,7 +58,7 @@ export default function PerformanceChart() {
       )
       setMetrics(periodMetrics)
     } catch {
-      setError('Could not load performance data.')
+      setError('We could not load performance data right now.')
     } finally {
       setLoading(false)
     }
@@ -107,12 +107,20 @@ export default function PerformanceChart() {
 
       <div className="mt-6 h-[280px] w-full sm:h-[340px]">
         {loading ? (
-          <div className="flex h-full items-center justify-center">
+          <div role="status" aria-live="polite" className="flex h-full items-center justify-center">
             <RefreshCw size={20} className="animate-spin text-slate-400" />
+            <span className="sr-only">Loading performance chart data</span>
           </div>
         ) : error ? (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-rose-500">{error}</p>
+          <div className="flex h-full flex-col items-center justify-center gap-3">
+            <p role="alert" className="text-sm text-rose-500">{error}</p>
+            <button
+              type="button"
+              onClick={() => fetchData(activePeriod)}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Try again
+            </button>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center">

@@ -70,13 +70,12 @@ function createHoldingsTableData(holdings) {
   })
 }
 
-export default function Overview({ searchQuery: searchQueryProp, onSearch, refreshToken }) {
+export default function Overview({ searchQuery: searchQueryProp, refreshToken }) {
   const [holdings, setHoldings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [internalSearchQuery, setInternalSearchQuery] = useState('')
 
-  const searchQuery = searchQueryProp !== undefined ? searchQueryProp : internalSearchQuery
+  const searchQuery = searchQueryProp || ''
 
   const load = async () => {
     try {
@@ -96,7 +95,7 @@ export default function Overview({ searchQuery: searchQueryProp, onSearch, refre
 
       setHoldings(items.map((item) => ({ ...item, currentPrice: pricesByTicker[item.ticker] ?? item.purchasePrice })))
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not load portfolio data.'))
+      setError(getApiErrorMessage(err, 'We could not load your portfolio right now.'))
     } finally {
       setLoading(false)
     }
@@ -118,18 +117,21 @@ export default function Overview({ searchQuery: searchQueryProp, onSearch, refre
     return holdingsTableData.filter((item) => `${item.ticker} ${item.name || ''} ${item.assetType}`.toLowerCase().includes(query))
   }, [holdingsTableData, searchQuery])
 
-  const handleSearch = (value) => {
-    if (onSearch) {
-      onSearch(value)
-      return
-    }
-    setInternalSearchQuery(value)
-  }
-
   return (
     <div className="space-y-6">
-      {loading ? <p className="py-6 text-center text-sm text-slate-500">Loading portfolio...</p> : null}
-      {error ? <p className="py-6 text-center text-sm text-rose-500">{error}</p> : null}
+      {loading ? <p role="status" aria-live="polite" className="py-6 text-center text-sm text-slate-500">Loading portfolio...</p> : null}
+      {error ? (
+        <div className="py-6 text-center">
+          <p role="alert" className="text-sm text-rose-500">{error}</p>
+          <button
+            type="button"
+            onClick={load}
+            className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {summaryCards.map((card) => (
@@ -159,4 +161,3 @@ export default function Overview({ searchQuery: searchQueryProp, onSearch, refre
     </div>
   )
 }
-

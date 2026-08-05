@@ -11,6 +11,7 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open sidebar navigation"
               className="rounded-lg border border-slate-200/80 p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
             >
               <Menu size={18} />
@@ -22,7 +23,12 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
         </header>
 
         {isSidebarOpen ? (
-          <div className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+          <button
+            type="button"
+            aria-label="Close sidebar navigation"
+            className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -35,6 +41,7 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
+                aria-label="Close sidebar navigation"
                 className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
               >
                 <X size={18} />

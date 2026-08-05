@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, RefreshCw, Trash2, X, TrendingDown } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, TrendingDown } from 'lucide-react'
+import AsyncState from '../components/AsyncState'
 import ConfirmDialog from '../components/ConfirmDialog'
+import DataTableShell from '../components/DataTableShell'
+import PageCard from '../components/PageCard'
+import RefreshAction from '../components/RefreshAction'
+import SectionHeader from '../components/SectionHeader'
 import {
   createPortfolioItem,
   deletePortfolioItem,
@@ -14,9 +19,35 @@ import { currency, formatPercent } from '../utils/formatters'
 
 const ASSET_TYPES = ['STOCK', 'BOND', 'CRYPTO']
 const emptyForm = { ticker: '', quantity: 1, assetType: 'STOCK', purchasePrice: '', purchaseDate: '' }
+const TICKER_PATTERN = /^[A-Za-z.]{1,10}$/
+
+function validateHoldingForm(form) {
+  const errors = {}
+  if (!form.ticker?.trim()) {
+    errors.ticker = 'Please enter a ticker symbol.'
+  } else if (!TICKER_PATTERN.test(form.ticker.trim())) {
+    errors.ticker = 'Use letters or dot only, up to 10 characters.'
+  }
+  if (!form.assetType) {
+    errors.assetType = 'Please select an asset type.'
+  }
+  if (!Number.isInteger(Number(form.quantity)) || Number(form.quantity) < 1) {
+    errors.quantity = 'Quantity must be a whole number of at least 1.'
+  }
+  if (form.purchasePrice === '' || Number(form.purchasePrice) <= 0) {
+    errors.purchasePrice = 'Purchase price must be greater than 0.'
+  }
+  if (!form.purchaseDate) {
+    errors.purchaseDate = 'Please select a purchase date.'
+  }
+  return errors
+}
 
 function HoldingModal({ isOpen, onClose, onSubmit, initialData, mode }) {
   const [form, setForm] = useState(emptyForm)
+  const [errors, setErrors] = useState({})
+  const [submitError, setSubmitError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -27,58 +58,93 @@ function HoldingModal({ isOpen, onClose, onSubmit, initialData, mode }) {
         purchasePrice: initialData.purchasePrice,
         purchaseDate: initialData.purchaseDate,
       } : emptyForm)
+      setErrors({})
+      setSubmitError('')
+      setIsSubmitting(false)
     }
   }, [isOpen, initialData])
 
   if (!isOpen) return null
+  const dialogTitleId = mode === 'edit' ? 'edit-holding-title' : 'add-holding-title'
+  const dialogDescriptionId = mode === 'edit' ? 'edit-holding-description' : 'add-holding-description'
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: name === 'quantity' ? Number(value) : value }))
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSubmit({ ...form, purchasePrice: parseFloat(form.purchasePrice), quantity: parseInt(form.quantity, 10) })
-    onClose()
+    const nextErrors = validateHoldingForm(form)
+    setErrors(nextErrors)
+    setSubmitError('')
+    if (Object.keys(nextErrors).length > 0) return
+
+    setIsSubmitting(true)
+    const ok = await onSubmit({
+      ...form,
+      ticker: form.ticker.trim().toUpperCase(),
+      purchasePrice: parseFloat(form.purchasePrice),
+      quantity: parseInt(form.quantity, 10),
+    })
+    setIsSubmitting(false)
+
+    if (ok) {
+      onClose()
+      return
+    }
+    setSubmitError('We could not save this holding. Please review the details and try again.')
   }
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={dialogTitleId}
+        aria-describedby={dialogDescriptionId}
+        className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl"
+      >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-semibold text-slate-900">{mode === 'edit' ? 'Edit Holding' : 'Add Holding'}</h3>
-            <p className="text-sm text-slate-500">Saved directly to the backend.</p>
+            <h3 id={dialogTitleId} className="text-xl font-semibold text-slate-900">{mode === 'edit' ? 'Edit Holding' : 'Add Holding'}</h3>
+            <p id={dialogDescriptionId} className="text-sm text-slate-500">Saved directly to the backend.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button>
+          <button type="button" aria-label="Close holding form" disabled={isSubmitting} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"><X size={18} /></button>
         </div>
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
           <label className="text-sm font-medium text-slate-700">
             Ticker
-            <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AAPL" className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm uppercase" />
+            <input required name="ticker" value={form.ticker} onChange={handleChange} placeholder="e.g. AAPL" className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm uppercase ${errors.ticker ? 'border-rose-300' : 'border-slate-200'}`} />
+            {errors.ticker ? <p className="mt-1 text-xs text-rose-500">{errors.ticker}</p> : null}
           </label>
           <label className="text-sm font-medium text-slate-700">
             Asset Type
-            <select name="assetType" value={form.assetType} onChange={handleChange} className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm">
+            <select name="assetType" value={form.assetType} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.assetType ? 'border-rose-300' : 'border-slate-200'}`}>
               {ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
+            {errors.assetType ? <p className="mt-1 text-xs text-rose-500">{errors.assetType}</p> : null}
           </label>
           <label className="text-sm font-medium text-slate-700">
             Quantity
-            <input required type="number" min="1" name="quantity" value={form.quantity} onChange={handleChange} className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm" />
+            <input required type="number" min="1" name="quantity" value={form.quantity} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.quantity ? 'border-rose-300' : 'border-slate-200'}`} />
+            {errors.quantity ? <p className="mt-1 text-xs text-rose-500">{errors.quantity}</p> : null}
           </label>
           <label className="text-sm font-medium text-slate-700">
             Purchase Price ($)
-            <input required type="number" min="0.01" step="0.01" name="purchasePrice" value={form.purchasePrice} onChange={handleChange} className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm" />
+            <input required type="number" min="0.01" step="0.01" name="purchasePrice" value={form.purchasePrice} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.purchasePrice ? 'border-rose-300' : 'border-slate-200'}`} />
+            {errors.purchasePrice ? <p className="mt-1 text-xs text-rose-500">{errors.purchasePrice}</p> : null}
           </label>
           <label className="sm:col-span-2 text-sm font-medium text-slate-700">
             Purchase Date
-            <input required type="date" name="purchaseDate" value={form.purchaseDate} onChange={handleChange} className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm" />
+            <input required type="date" name="purchaseDate" value={form.purchaseDate} onChange={handleChange} className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm ${errors.purchaseDate ? 'border-rose-300' : 'border-slate-200'}`} />
+            {errors.purchaseDate ? <p className="mt-1 text-xs text-rose-500">{errors.purchaseDate}</p> : null}
           </label>
+          {submitError ? <p role="alert" className="sm:col-span-2 text-sm text-rose-500">{submitError}</p> : null}
           <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">Cancel</button>
-            <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Save Holding</button>
+            <button type="button" disabled={isSubmitting} onClick={onClose} className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 disabled:opacity-50">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Save Holding</button>
           </div>
         </form>
       </div>
@@ -127,7 +193,7 @@ export default function Holdings({ refreshToken }) {
       setItems(holdings)
       await loadPrices(holdings)
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not load holdings.'))
+      setError(getApiErrorMessage(err, 'We could not load your holdings right now.'))
     } finally {
       setLoading(false)
     }
@@ -176,8 +242,10 @@ export default function Holdings({ refreshToken }) {
         await createPortfolioItem(form)
       }
       await load()
+      return true
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not save holding.'))
+      setError(getApiErrorMessage(err, 'We could not save this holding right now.'))
+      return false
     }
   }
 
@@ -187,7 +255,7 @@ export default function Holdings({ refreshToken }) {
       setConfirmDeleteId(null)
       await load()
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not delete holding.'))
+      setError(getApiErrorMessage(err, 'We could not delete this holding right now.'))
     }
   }
 
@@ -198,71 +266,60 @@ export default function Holdings({ refreshToken }) {
       setConfirmSellItem(null)
       await load()
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Could not sell holding.'))
+      setError(getApiErrorMessage(err, 'We could not complete this sell action right now.'))
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Holdings</h2>
-            <p className="text-sm text-slate-500">Portfolio positions + live prices from backend price service.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">{items.length} positions</div>
-            <button onClick={() => loadPrices(items)} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-              <RefreshCw size={14} className={priceLoading ? 'animate-spin' : ''} /> Refresh Prices
-            </button>
-            <button onClick={handleAdd} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-              <Plus size={15} /> Add Holding
-            </button>
-          </div>
-        </div>
+      <PageCard className="p-5">
+        <SectionHeader
+          title="Holdings"
+          description="Portfolio positions + live prices from backend price service."
+          countLabel={`${items.length} positions`}
+          actions={(
+            <>
+              <RefreshAction onClick={() => loadPrices(items)} loading={priceLoading} label="Refresh Prices" />
+              <button onClick={handleAdd} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                <Plus size={15} /> Add Holding
+              </button>
+            </>
+          )}
+        />
 
-        {loading && <p className="py-10 text-center text-sm text-slate-500">Loading holdings...</p>}
-        {error && <p className="py-10 text-center text-sm text-rose-500">{error}</p>}
+        <AsyncState loading={loading} error={error} loadingMessage="Loading holdings..." onRetry={load} />
 
         {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  {['Ticker', 'Asset Type', 'Quantity', 'Purchase Price', 'Live Price', '24h Change', 'Current Value', 'Unrealized P/L', 'Actions'].map((h) => (
-                    <th key={h} className="px-4 py-3 font-semibold text-slate-700">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {tableRows.length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-500">No holdings found. Add your first holding above.</td></tr>
-                ) : tableRows.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-slate-50">
-                    <td className="px-4 py-3 font-semibold text-slate-900">{item.ticker}</td>
-                    <td className="px-4 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{item.assetType}</span></td>
-                    <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
-                    <td className="px-4 py-3 text-slate-600">{currency.format(item.purchasePrice)}</td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{item.livePrice !== undefined && item.livePrice !== null ? currency.format(item.livePrice) : '—'}</td>
-                    <td className={`px-4 py-3 font-medium ${Number(item.changePercent || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {item.changePercent !== undefined && item.changePercent !== null ? formatPercent(item.changePercent) : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-slate-900">{currency.format(item.currentValue)}</td>
-                    <td className={`px-4 py-3 font-medium ${item.unrealized >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{currency.format(item.unrealized)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleEdit(item)} className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100"><Pencil size={14} /></button>
-                        <button onClick={() => setConfirmSellItem(item)} title="Sell all" className="rounded-xl border border-amber-200 p-2 text-amber-600 hover:bg-amber-50"><TrendingDown size={14} /></button>
-                        <button onClick={() => setConfirmDeleteId(item.id)} className="rounded-xl border border-rose-100 p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTableShell
+            headers={['Ticker', 'Asset Type', 'Quantity', 'Purchase Price', 'Live Price', '24h Change', 'Current Value', 'Unrealized P/L', 'Actions']}
+            hasRows={tableRows.length > 0}
+            emptyMessage="No holdings found. Add your first holding above."
+            colSpan={9}
+          >
+            {tableRows.map((item) => (
+              <tr key={item.id} className="transition hover:bg-slate-50">
+                <td className="px-4 py-3 font-semibold text-slate-900">{item.ticker}</td>
+                <td className="px-4 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{item.assetType}</span></td>
+                <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
+                <td className="px-4 py-3 text-slate-600">{currency.format(item.purchasePrice)}</td>
+                <td className="px-4 py-3 font-medium text-slate-900">{item.livePrice !== undefined && item.livePrice !== null ? currency.format(item.livePrice) : '—'}</td>
+                <td className={`px-4 py-3 font-medium ${Number(item.changePercent || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {item.changePercent !== undefined && item.changePercent !== null ? formatPercent(item.changePercent) : '—'}
+                </td>
+                <td className="px-4 py-3 text-slate-900">{currency.format(item.currentValue)}</td>
+                <td className={`px-4 py-3 font-medium ${item.unrealized >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{currency.format(item.unrealized)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button type="button" aria-label={`Edit holding ${item.ticker}`} onClick={() => handleEdit(item)} className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100"><Pencil size={14} /></button>
+                    <button type="button" aria-label={`Sell all units of ${item.ticker}`} onClick={() => setConfirmSellItem(item)} title="Sell all" className="rounded-xl border border-amber-200 p-2 text-amber-600 hover:bg-amber-50"><TrendingDown size={14} /></button>
+                    <button type="button" aria-label={`Delete holding ${item.ticker}`} onClick={() => setConfirmDeleteId(item.id)} className="rounded-xl border border-rose-100 p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={14} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </DataTableShell>
         )}
-      </div>
+      </PageCard>
 
       <HoldingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSave} initialData={editingItem} mode={editingItem ? 'edit' : 'add'} />
       <ConfirmDialog isOpen={Boolean(confirmDeleteId)} title="Delete holding" message="This will permanently remove the holding from the portfolio." onCancel={() => setConfirmDeleteId(null)} onConfirm={handleConfirmDelete} />

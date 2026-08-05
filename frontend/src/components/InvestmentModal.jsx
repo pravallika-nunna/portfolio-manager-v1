@@ -140,6 +140,8 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
   )
 
   if (!isOpen) return null
+  const titleId = 'investment-modal-title'
+  const descriptionId = 'investment-modal-description'
 
   const setField = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }))
@@ -200,13 +202,19 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl"
+      >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-semibold text-slate-900">Add Investment</h3>
-            <p className="text-sm text-slate-500">Saved directly to your portfolio database.</p>
+            <h3 id={titleId} className="text-xl font-semibold text-slate-900">Add Investment</h3>
+            <p id={descriptionId} className="text-sm text-slate-500">Saved directly to your portfolio database.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={onClose} aria-label="Close add investment dialog" className="rounded-full p-2 text-slate-500 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
@@ -296,7 +304,7 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           ) : null}
 
           {form.assetType === 'STOCK' && quote.status === 'loading' ? (
-            <div className="sm:col-span-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            <div role="status" aria-live="polite" className="sm:col-span-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
               <Loader2 size={14} className="animate-spin" />
               Fetching latest market price...
             </div>
@@ -313,7 +321,7 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
           ) : null}
 
           {form.assetType === 'STOCK' && quote.status === 'error' ? (
-            <div className="sm:col-span-2 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <div role="alert" className="sm:col-span-2 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span>{quote.error} You can enter the purchase price manually.</span>
             </div>
@@ -413,6 +421,8 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
 
           {statusMessage ? (
             <div
+              role={status === 'error' ? 'alert' : 'status'}
+              aria-live={status === 'error' ? undefined : 'polite'}
               className={`sm:col-span-2 flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium ${
                 status === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'
               }`}

@@ -23,7 +23,7 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
   }
 
   return (
-    <header className="w-full border-b border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur-sm sm:px-4 lg:px-6">
+    <div className="w-full border-b border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur-sm sm:px-4 lg:px-6">
       <div className="flex w-full items-center justify-between gap-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-semibold text-white">
@@ -39,6 +39,7 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
+              aria-label="Search investments"
               value={query}
               onChange={(event) => {
                 const nextValue = event.target.value
@@ -73,6 +74,7 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
+                aria-label="Search investments"
                 value={query}
                 onChange={(event) => {
                   const nextValue = event.target.value
@@ -89,6 +91,9 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
             <button
               type="button"
               onClick={() => setIsMoreOpen((open) => !open)}
+              aria-label="Open more actions menu"
+              aria-expanded={isMoreOpen}
+              aria-haspopup="menu"
               className="flex items-center justify-center rounded-lg border border-slate-200/80 bg-white p-2 text-slate-600"
             >
               <MoreHorizontal size={18} />
@@ -125,6 +130,9 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
             <button
               type="button"
               onClick={() => setIsProfileOpen((open) => !open)}
+              aria-label="Open profile menu"
+              aria-expanded={isProfileOpen}
+              aria-haspopup="menu"
               className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white p-2 text-sm font-medium text-slate-700"
             >
               <UserCircle2 size={20} />
@@ -140,6 +148,6 @@ export default function TopNavBar({ holdings, onAddInvestment, onOpenProfile, on
           </div>
         </div>
       </div>
-    </header>
+    </div>
   )
 }
