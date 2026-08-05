@@ -10,6 +10,7 @@ import Watchlist from './pages/Watchlist'
 import Dividends from './pages/Dividends'
 import Tax from './pages/Tax'
 import Profile from './pages/Profile'
+import Support from './pages/Support'
 import { getApiErrorMessage, getInvestments } from './services/investmentService'
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
           <Route path="/dividends" element={<Dividends />} />
           <Route path="/tax" element={<Tax />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/support" element={<Support />} />
         </Routes>
       </AppShell>
 
@@ -63,4 +65,3 @@ function App() {
 }
 
 export default App
-

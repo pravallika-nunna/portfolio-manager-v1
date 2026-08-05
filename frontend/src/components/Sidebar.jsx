@@ -1,4 +1,4 @@
-import { LayoutDashboard, Landmark, ArrowLeftRight, Eye, UserCircle, Calculator, BarChart3, Coins } from 'lucide-react'
+import { LayoutDashboard, Landmark, ArrowLeftRight, Eye, UserCircle, Calculator, BarChart3, Coins, LifeBuoy } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const navigationItems = [
@@ -10,6 +10,7 @@ const navigationItems = [
   { name: 'Dividends', path: '/dividends', icon: Coins },
   { name: 'Tax', path: '/tax', icon: Calculator },
   { name: 'Profile', path: '/profile', icon: UserCircle },
+  { name: 'Support', path: '/support', icon: LifeBuoy },
 ]
 
 export default function Sidebar() {
