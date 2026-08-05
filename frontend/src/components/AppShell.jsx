@@ -3,11 +3,11 @@ import { useState } from 'react'
 import Sidebar from './Sidebar'
 import TopNavBar from './TopNavBar'
 
-function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsSidebarOpen, onAddInvestment, children }) {
+function AppShell({ searchQuery: _searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsSidebarOpen, onAddInvestment, children }) {
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(true)
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.08),_transparent_34%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_100%)] text-slate-800">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(127,255,60,0.06),_transparent_34%),linear-gradient(180deg,_#0a0a0a_0%,_#0f0f0f_100%)] text-slate-800">
       <div className="mx-auto flex min-h-screen w-full max-w-[1800px] flex-col overflow-hidden">
         <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 lg:px-6">
@@ -65,7 +65,7 @@ function AppShell({ searchQuery, setSearchQuery, holdings, isSidebarOpen, setIsS
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-sm font-medium uppercase tracking-[0.32em] text-slate-400">Portfolio overview</p>
-                <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Modern dashboard for your investments</h1>
+                <h1 className="pm-display text-3xl font-semibold text-slate-900 sm:text-4xl">Modern dashboard for your investments</h1>
               </div>
 
             </div>

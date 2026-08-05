@@ -31,11 +31,11 @@ export default function PortfolioChart({ data, activeRange, onRangeChange, range
       <div className="mt-6 h-[320px] w-full sm:h-[360px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+            <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
             <XAxis dataKey="name" tickLine={false} axisLine={false} />
             <YAxis tickLine={false} axisLine={false} />
             <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
-            <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} dot={false} />
+            <Line type="monotone" dataKey="value" stroke="#7fff3c" strokeWidth={3} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

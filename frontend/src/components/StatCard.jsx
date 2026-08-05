@@ -3,8 +3,8 @@ import InfoTooltip from './InfoTooltip'
 
 const TONE_CLASS = {
   slate: 'text-slate-900',
-  positive: 'text-emerald-600',
-  negative: 'text-rose-600',
+  positive: 'text-emerald-400',
+  negative: 'text-rose-400',
 }
 
 export default function StatCard({ title, value, icon: Icon, tone = 'slate', subtle = false, info }) {
@@ -12,7 +12,7 @@ export default function StatCard({ title, value, icon: Icon, tone = 'slate', sub
 
   if (subtle) {
     return (
-      <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4 shadow-[0_8px_20px_rgba(15,23,42,0.03)]">
+      <div className="pm-glass-card rounded-[20px] border border-slate-200 bg-slate-50 p-4 shadow-[0_8px_20px_rgba(15,23,42,0.03)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
@@ -20,7 +20,7 @@ export default function StatCard({ title, value, icon: Icon, tone = 'slate', sub
           </div>
           {Icon ? <Icon size={18} className="text-slate-400" /> : null}
         </div>
-        <p className={`mt-3 text-xl font-semibold ${toneClass}`}>{value}</p>
+        <p className={`pm-display mt-3 text-xl font-semibold ${toneClass}`}>{value}</p>
       </div>
     )
   }
@@ -34,7 +34,7 @@ export default function StatCard({ title, value, icon: Icon, tone = 'slate', sub
         </div>
         {Icon ? <Icon size={18} className="text-slate-400" /> : null}
       </div>
-      <p className={`mt-4 text-2xl font-semibold ${toneClass}`}>{value}</p>
+      <p className={`pm-display mt-4 text-2xl font-semibold ${toneClass}`}>{value}</p>
     </PageCard>
   )
 }

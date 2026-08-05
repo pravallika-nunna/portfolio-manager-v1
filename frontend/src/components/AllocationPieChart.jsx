@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import InfoTooltip from './InfoTooltip'
 
-const palette = ['#2563eb', '#7c3aed', '#14b8a6', '#f59e0b', '#ef4444', '#64748b']
+const palette = ['#7fff3c', '#00c853', '#93ff65', '#38b000', '#a3e635', '#4d7c0f']
 
 export default function AllocationPieChart({ title, data, info }) {
   return (

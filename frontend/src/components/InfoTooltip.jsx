@@ -71,7 +71,7 @@ export default function InfoTooltip({ title, description, learnMoreLink }) {
               href={learnMoreLink}
               target="_blank"
               rel="noreferrer noopener"
-              className="mt-2 inline-flex text-xs font-semibold text-blue-600 hover:text-blue-700"
+              className="mt-2 inline-flex text-xs font-semibold text-emerald-400 hover:text-emerald-300"
             >
               Learn more
             </a>

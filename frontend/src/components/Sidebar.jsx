@@ -48,7 +48,7 @@ export default function Sidebar({ collapsible = false, collapsed = false, onTogg
             </div>
             <div className={`${collapsible && collapsed ? 'ml-0 max-w-0 overflow-hidden opacity-0' : 'ml-3 max-w-[160px] opacity-100'} transition-all duration-200`}>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Portfolio</p>
-              <h2 className="mt-1 text-xl font-semibold text-slate-900">Manager</h2>
+              <h2 className="pm-display mt-1 text-xl font-semibold text-slate-900">Manager</h2>
             </div>
           </div>
           {collapsible && !collapsed ? (
@@ -73,7 +73,7 @@ export default function Sidebar({ collapsible = false, collapsed = false, onTogg
                 [
                   `group relative flex items-center rounded-2xl py-3 text-sm font-medium transition-all ${collapsible && collapsed ? 'justify-center px-2' : 'gap-3 px-3'}`,
                   isActive
-                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
+                    ? 'bg-slate-900 text-white'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                 ].join(' ')
               }
