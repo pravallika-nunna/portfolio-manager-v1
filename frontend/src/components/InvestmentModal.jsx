@@ -208,7 +208,7 @@ export default function InvestmentModal({ isOpen, onClose, onSuccess }) {
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl"
+        className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-[#161616] p-5 shadow-2xl"
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
